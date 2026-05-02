@@ -1,0 +1,237 @@
+pode me dar ideia, 
+
+Visão geral da solução
+Vamos construir um portal web SvelteKit que gerencia as diárias dos servidores da Prefeitura de Lagoa dos Patos (MG). Ele terá:
+
+Camada	Tecnologias	Funções principais
+Front‑end	Svelte Kit + Tailwind (ou CSS customizado)	UI responsiva, três tipos de usuários, formulários de solicitação, tabelas de histórico, geração de PDF
+API/Back‑end	Svelte Kit endpoints (src/routes/api/*)	Controle de regras de preço, coleta de distância, CRUD dos dados, geração de PDF
+Persistência	SQLite (local) + Turso (SQLite‑as‑a‑service) via Drizzle ORM	Tabelas de usuários, diárias, preços por zona, logs de scraping
+Scraping	Node + node-fetch + cheerio (ou puppeteer se precisar de JS)	Busca em www.distanciasentrecidades.com, pré‑processa e grava distâncias no banco
+PDF	pdf-lib ou @pdftron/pdfjs (geração no back‑end) + download automático	Folha de diárias pronta para impressão ou envio por e‑mail
+1. Modelagem de dados (Drizzle + SQLite)
+ts
+// src/lib/db/schema.ts
+import { sqliteTable, integer, text, real, primaryKey } from 'drizzle-orm/sqlite-core';
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  email: text('email').unique().notNull(),
+  role: text('role')
+    .$default('solicitante') // solicitante | adm_diarias | adm_geral
+    .notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+export const cities = sqliteTable('cities', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  state: text('state').notNull(),
+  // distância da capital de MG (Belo Horizonte) em km
+  distanceFromCapital: real('distance_from_capital'),
+});
+export const priceZones = sqliteTable('price_zones', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  maxDistance: real('max_distance').notNull(), // km
+  price: real('price').notNull(),
+});
+export const daily_requests = sqliteTable('daily_requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  originCityId: integer('origin_city_id')
+    .references(() => cities.id)
+    .notNull(),
+  destCityId: integer('dest_city_id')
+    .references(() => cities.id)
+    .notNull(),
+  distance: real('distance').notNull(),
+  price: real('price').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+  status: text('status')
+    .$default('pendente')
+    .notNull(), // pendente | aprovada | rejeitada
+});
+Drizzle já está presente (drizzle.config.ts). Basta criar o client (src/lib/db/client.ts) apontando para o local.db (SQLite) e, ao fazer deploy, apontar para a URL do Turso (DATABASE_URL).
+2. Fluxo de usuário
+Papel	Tela principal	Ações
+Solicitante	+page.svelte “Solicitar Diária”	- Selecionar cidade de origem (geralmente a base)
+- Selecionar cidade de destino
+- O app calcula a distância (cache ou chama API de scraping)
+- Exibe preço automático (regra de zona)
+- Envia solicitação
+Administrador de Diárias	admin-diarias.svelte	- Visualizar lista de solicitações pendentes
+- Aprovar/Rejeitar (muda status)
+- Editar preço manualmente se necessário
+Administrador Geral	admin-geral.svelte	- Gerenciar brasão e nome da prefeitura (dados guardados em tabela settings)
+- CRUD de cidades e zonas de preço
+- Ver logs de scraping
+- Atualizar logo e tema (CSS custom)
+3. Regras de preço
+ts
+function calcularPreco(distancia: number, priceZones: PriceZone[]) {
+  // ordena por maxDistance asc
+  const zona = priceZones.find(z => distancia <= z.maxDistance) ?? priceZones[priceZones.length-1];
+  return zona.price;
+}
+Exemplo de zonas
+Zona	Até km	Preço (R$)
+1	0‑50	150
+2	51‑150	250
+3	151‑300	400
+4	>300	600
+Exceções:
+Capital Federal (Brasília) – preço fixo (ex.: 800).
+Capital Estadual (Belo Horizonte) – preço fixo (ex.: 700).
+Essas exceções podem ser detectadas pelo state ou por um city.isCapital flag.
+
+4. Scraping de distância
+4.1 Estrutura da função de coleta
+ts
+// src/lib/scraper.ts
+import fetch from 'node-fetch';
+import * as cheerio from 'cheerio';
+export async function fetchDistance(
+  origin: string,
+  destination: string
+): Promise<number> {
+  const url = `https://www.distanciasentrecidades.com/${origin}-${destination}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch distance');
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  // a página tem algo como: "<strong>Distância: 123 km</strong>"
+  const txt = $('strong')
+    .filter((_, el) => $(el).text().includes('Distância'))
+    .first()
+    .text();
+  const match = txt.match(/([\d,.]+)\s*km/i);
+  if (!match) throw new Error('Could not parse distance');
+  return parseFloat(match[1].replace(',', '.'));
+}
+4.2 Agendamento (opcional)
+Use node-cron ou GitHub Actions para rodar o scraper a cada 24 h e atualizar a tabela cities com distâncias para a capital de MG.
+No back‑end, exponha um endpoint /api/scrape/:origin/:dest que chama fetchDistance, grava o valor na tabela cities (ou em uma tabela distances_cache) e devolve o número.
+5. API de Diárias (SvelteKit endpoints)
+ts
+// src/routes/api/diarias/+server.ts
+import { json } from '@sveltejs/kit';
+import { db } from '$lib/db/client';
+import { daily_requests, users, cities, priceZones } from '$lib/db/schema';
+import { fetchDistance } from '$lib/scraper';
+export async function POST({ request }) {
+  const { userId, originCity, destCity } = await request.json();
+  // 1️⃣ Busca ou cria cidades
+  const origin = await db.select().from(cities).where(eq(cities.name, originCity)).get();
+  const dest   = await db.select().from(cities).where(eq(cities.name, destCity)).get();
+  // 2️⃣ Calcula distância (cache ou scraping)
+  let distance = dest?.distanceFromCapital ?? await fetchDistance(origin.name, dest.name);
+  // opcional: salva distância no registro da cidade
+  // 3️⃣ Busca zona de preço
+  const zones = await db.select().from(priceZones).all();
+  const price = calcularPreco(distance, zones);
+  // 4️⃣ Persiste a solicitação
+  const inserted = await db
+    .insert(daily_requests)
+    .values({
+      userId,
+      originCityId: origin.id,
+      destCityId: dest.id,
+      distance,
+      price,
+    })
+    .returning();
+  return json({ success: true, request: inserted[0] });
+}
+Endpoints GET para listagens também são necessários (/api/diarias/pending, /api/users/me, etc.).
+
+6. Geração de PDF
+6.1 Dados do PDF
+ts
+export async function generatePdf(diaria: DailyRequest): Promise<Uint8Array> {
+  const { PDFDocument, rgb } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595, 842]); // A4
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const draw = (text: string, y: number) => {
+    page.drawText(text, {
+      x: 50,
+      y,
+      size: 12,
+      font,
+      color: rgb(0, 0, 0),
+    });
+  };
+  draw(`Diária nº ${diaria.id}`, 770);
+  draw(`Solicitante: ${diaria.userName}`, 750);
+  draw(`Origem: ${diaria.originCity}`, 730);
+  draw(`Destino: ${diaria.destCity}`, 710);
+  draw(`Distância: ${diaria.distance.toFixed(1)} km`, 690);
+  draw(`Valor: R$ ${diaria.price.toFixed(2)}`, 670);
+  draw(`Data: ${new Date(diaria.createdAt).toLocaleDateString()}`, 650);
+  const pdfBytes = await doc.save();
+  return pdfBytes;
+}
+6.2 Endpoint para download
+ts
+// src/routes/api/diarias/[id]/pdf/+server.ts
+export async function GET({ params }) {
+  const { id } = params;
+  const diaria = await db.select().from(daily_requests).where(eq(daily_requests.id, Number(id))).get();
+  const bytes = await generatePdf(diaria);
+  return new Response(bytes, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="diaria-${id}.pdf"`,
+    },
+  });
+}
+O front‑end abre esse endpoint em uma nova aba ou baixa automaticamente ao aprovar a solicitação.
+
+7. Autenticação & Controle de acesso
+Kit de autenticação: Use lucia-auth ou sveltekit-auth com JWT (session cookie).
+Middleware (hooks.server.ts) verifica a sessão e coloca event.locals.user.
+Cada endpoint verifica a role (event.locals.user.role) para garantir:
+solicitante → apenas POST nas diárias
+adm_diarias → aprovar/rejeitar (PATCH /api/diarias/:id/status)
+adm_geral → CRUD de cidades, zonas, configurações globais
+ts
+// src/hooks.server.ts
+export async function handle({ event, resolve }) {
+  const session = event.cookies.get('session');
+  if (session) {
+    const user = await getUserFromSession(session);
+    event.locals.user = user;
+  }
+  return resolve(event);
+}
+8. UI / Design (estética premium)
+Tema escuro + Light com CSS custom (gradient, glass‑morphism).
+Tipografia: Google Font “Inter” (legível, moderna).
+Header mostra brasão e nome da prefeitura (admin geral pode alterar).
+Card de solicitação:
+sombra sutil, animação hover → eleva.
+botão “Calcular” com micro‑ animação (spinner).
+Tabela de histórico: uso de datatables estilos com linhas alternadas, filtro por status.
+Modal de aprovação para admin diárias: fundo semi‑transparente, botão “Aprovar” em verde vibrante, “Rejeitar” em vermelho.
+Dica visual: gerar uma imagem mockup da tela principal (uso do generate_image pode ser útil) para validar com o cliente antes de codificar.
+
+9. Roadmap de implementação (passos curtos)
+Sprint	Entregáveis
+1	Configurar Drizzle + SQLite (local) → conectar ao Turso; criar tabelas básicas.
+2	Implementar autenticação + middleware de roles.
+3	Criar rotas API (/api/diarias, /api/cities, /api/price‑zones).
+4	Construir UI das três páginas (solicitante, adm‑diárias, adm‑geral) com layout premium.
+5	Implementar scraper + rotina de atualização de distâncias.
+6	Implementar cálculo automático de preço e validações.
+7	Geração de PDF + download automático.
+8	Testes (unitário + e2e) e ajustes de responsividade.
+9	Deploy no Vercel/Netlify (ou Railway) apontando a URL do Turso.
+10. Próximos passos para você
+Definir as regras de preço (faixas de km, valores específicos para Brasília e Belo Horizonte).
+Listar as cidades que farão parte do sistema (pode começar com a capital do município e as cidades mais próximas).
+Aprovar o design visual – caso queira, peça uma imagem mockup das telas.
+Decidir a frequência do scraping (diária, semanal).
+Confirmar a forma de autenticação (login email+senha ou SSO da prefeitura).
+Com essas informações, podemos avançar para a primeira implementação de schemas e rotas ou produzir os primeiros mockups de UI.
+Fico à disposição para detalhar qualquer ponto ou iniciar o código!
