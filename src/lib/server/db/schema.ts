@@ -19,6 +19,7 @@ export const user = sqliteTable('user', {
 	bancoAgenciaCod: text('banco_agencia_cod'),
 	bancoAgenciaNum: text('banco_agencia_num'),
 	bancoContaNum: text('banco_conta_num'),
+	bancoTipoConta: text('banco_tipo_conta'), // Corrente | Poupança
 	phone: text('phone'),
 });
 
@@ -76,6 +77,8 @@ export const dailyRequests = sqliteTable('daily_requests', {
 	tipoDiaria: text('tipo_diaria').notNull(), // Antecipadas | Vencidas | Indenização
 	dataSaida: integer('data_saida', { mode: 'timestamp' }).notNull(),
 	dataRetorno: integer('data_retorno', { mode: 'timestamp' }).notNull(),
+	horaSaida: text('hora_saida'),
+	horaRetorno: text('hora_retorno'),
 	meioTransporte: text('meio_transporte').notNull(), // Oficial | Avião | Ônibus | Van | Outro
 	veiculoOficialPlaca: text('veiculo_oficial_placa'),
 	destinoCidadeUf: text('destino_cidade_uf').notNull(),
@@ -140,13 +143,23 @@ export const settings = sqliteTable('settings', {
 	prefeituraEndereco: text('prefeitura_endereco'),
 	prefeituraCep: text('prefeitura_cep'),
 	prefeituraLei: text('prefeitura_lei').default('Lei No. 766/2017 (Decreto no. 32/2019)'),
+	prefeitoNome: text('prefeito_nome'),
 	logoUrl: text('logo_url'),
+	valorIndenizacaoKm: real('valor_indenizacao_km').default(0.8),
 });
 
 export const priceZones = sqliteTable('price_zones', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	maxDistance: real('max_distance').notNull(),
 	price: real('price').notNull(),
+});
+
+export const destinations = sqliteTable('destinations', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	city: text('city').notNull(),
+	state: text('state').notNull(),
+	distance: real('distance').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
 export const events = sqliteTable('events', {

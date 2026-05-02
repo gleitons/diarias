@@ -59,6 +59,10 @@ export const actions: Actions = {
 		
 		const contabilidadeParecer = formData.get('contabilidadeParecer') as string;
 		const homologacaoStatus = formData.get('homologacaoStatus') as string;
+		
+		const anexoPassagens = formData.get('anexoPassagens') === 'on';
+		const anexoCartoesEmbarque = formData.get('anexoCartoesEmbarque') === 'on';
+		const anexoAutorizacaoVeiculo = formData.get('anexoAutorizacaoVeiculo') === 'on';
 
 		await db.update(accountabilityReports)
 			.set({
@@ -66,7 +70,10 @@ export const actions: Actions = {
 				contabilidadeData: new Date(),
 				homologacaoStatus,
 				homologacaoData: new Date(),
-				status: 'aprovada'
+				anexoPassagens,
+				anexoCartoesEmbarque,
+				anexoAutorizacaoVeiculo,
+				status: homologacaoStatus === 'REPROVADA' ? 'rejeitada' : 'aprovada'
 			})
 			.where(eq(accountabilityReports.dailyRequestId, id));
 

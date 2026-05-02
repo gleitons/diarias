@@ -56,7 +56,7 @@
 </script>
 
 <div class="space-y-6 pb-12">
-	<header>
+	<header id="topo">
 		<h2 class="text-2xl font-bold text-slate-800">Cadastrar Evento</h2>
 		<p class="text-slate-500">Crie um evento compartilhado com cálculo de distância automático.</p>
 	</header>
@@ -69,13 +69,19 @@
 				</div>
 				<div>
 					<p class="font-bold text-lg">Evento criado com sucesso!</p>
-					<p class="text-sm">Código de acesso: <span class="bg-emerald-200 px-2 py-1 rounded font-black text-emerald-900 tracking-widest">{form.code}</span></p>
+					<p class="text-sm">
+						Código de acesso: <span class="bg-emerald-200 px-2 py-1 rounded font-black text-emerald-900 tracking-widest">{form.code}</span>
+					</p>
+					<button class="mt-4">
+						<a href="/eventos" class="text-blue-600 font-bold hover:text-blue-700">Clique aqui para acessar todos os eventos</a>
+					</button>
 				</div>
 			</div>
 		</div>
 	{/if}
 
 	<form 
+		id="create-form"
 		method="POST" 
 		action="?/create" 
 		use:enhance={() => {
@@ -186,7 +192,9 @@
 							<div class="relative flex items-center justify-center gap-2">
 								<input 
 									type="number" 
+									id="distance"
 									name="distance" 
+									form="create-form"
 									bind:value={distance}
 									class="w-24 text-center text-4xl font-black bg-transparent border-b-2 border-slate-200 focus:border-blue-500 outline-none font-mono"
 								/>
@@ -206,19 +214,21 @@
 						</p>
 					</div>
 
-					<button 
-						type="submit" 
-						disabled={isSaving || isFetchingDistance || !selectedCity}
-						class="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 mt-4"
-					>
-						{#if isSaving}
-							<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-							Criando...
-						{:else}
-							<Send size={20} />
-							Cadastrar Evento
-						{/if}
-					</button>
+					<a href="#topo">
+						<button
+							type="submit"
+							disabled={isSaving || isFetchingDistance || !selectedCity}
+							class="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 mt-4"
+						>
+							{#if isSaving}
+								<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+								Criando...
+							{:else}
+								<Send size={20} />
+								Cadastrar Evento
+							{/if}
+						</button>
+					</a>
 				</div>
 			</section>
 		</div>

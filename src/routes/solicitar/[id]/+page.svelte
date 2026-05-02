@@ -13,6 +13,7 @@
 	// Event loading (optional in edit)
 	let eventCode = $state('');
 	let isLoadingEvent = $state(false);
+	let isSearchingDistance = $state(false);
 	let eventError = $state('');
 
 	let destinoCidadeUf = $state(data.request.destinoCidadeUf);
@@ -37,6 +38,37 @@
 		}
 	}
 
+	async function lookupDistance() {
+		if (!destinoCidadeUf || destinoCidadeUf.length < 3) return;
+		
+		const parts = destinoCidadeUf.split(' - ');
+		const city = parts[0];
+		const uf = parts[1];
+		
+		const cached = data.destinations?.find(d => 
+			d.city.toLowerCase() === city.trim().toLowerCase() && 
+			(!uf || d.state.toLowerCase() === uf.trim().toLowerCase())
+		);
+
+		if (cached) {
+			distancia = cached.distance * 2;
+			return;
+		}
+
+		isSearchingDistance = true;
+		try {
+			const res = await fetch(`/api/distancia?destino=${encodeURIComponent(city.trim())}&uf=${encodeURIComponent(uf?.trim() || 'MG')}`);
+			const json = await res.json();
+			if (json.distance) {
+				distancia = json.distance * 2;
+			}
+		} catch (e) {
+			console.error('Erro ao buscar distância:', e);
+		} finally {
+			isSearchingDistance = false;
+		}
+	}
+
 	// Derived calculations
 	let valorUnitario = $derived.by(() => {
 		if (!data.priceZones) return 0;
@@ -50,7 +82,7 @@
 
 <div class="space-y-6 pb-12">
 	<header class="flex justify-between items-start">
-		<div>
+		<div id="topo">
 			<h2 class="text-2xl font-bold text-slate-800">Editar Diária</h2>
 			<p class="text-slate-500">Alterando solicitação #{data.request.id} ({data.request.exercicio}).</p>
 		</div>
@@ -127,10 +159,17 @@
 						<input 
 							type="text" id="destinoCidadeUf" name="destinoCidadeUf" 
 							bind:value={destinoCidadeUf}
+							list="destinations-list"
+							onblur={lookupDistance}
 							required
 							placeholder="Ex: Belo Horizonte - MG"
 							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
 						/>
+						<datalist id="destinations-list">
+							{#each data.destinations as d}
+								<option value="{d.city} - {d.state}"></option>
+							{/each}
+						</datalist>
 					</div>
 					<div class="space-y-2">
 						<label for="objetivoViagem" class="text-sm font-semibold text-slate-700">Objetivo da Viagem</label>
@@ -243,9 +282,15 @@
 								<input 
 									type="number" id="distanciaIdaVolta" name="distanciaIdaVolta" 
 									bind:value={distancia}
-									min="0"
-									class="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-lg"
+									required min="0" step="0.1"
+									class={cn(
+										"w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-lg",
+										isSearchingDistance && "animate-pulse bg-blue-50 border-blue-200"
+									)}
 								/>
+								{#if isSearchingDistance}
+									<p class="text-[10px] text-blue-600 font-bold animate-pulse uppercase tracking-widest mt-1">Buscando distância...</p>
+								{/if}
 								<span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">KM</span>
 							</div>
 							<p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">O valor unitário é baseado em {distancia / 2}km (Ida)</p>
@@ -290,19 +335,21 @@
 
 					<input type="hidden" name="valorTotalSolicitado" value={valorTotal} />
 
-					<button 
-						type="submit" 
-						disabled={isSaving}
-						class="w-full flex items-center justify-center gap-3 py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-slate-200 mt-4"
-					>
-						{#if isSaving}
-							<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-							Atualizando...
-						{:else}
-							<Send size={20} />
-							Salvar Alterações
-						{/if}
-					</button>
+					<a href="#topo">
+						<button
+							type="submit"
+							disabled={isSaving}
+							class="w-full flex items-center justify-center gap-3 py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-slate-200 mt-4"
+						>
+							{#if isSaving}
+								<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+								Atualizando...
+							{:else}
+								<Send size={20} />
+								Salvar Alterações
+							{/if}
+						</button>
+					</a>
 				</div>
 			</section>
 

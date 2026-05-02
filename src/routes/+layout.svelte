@@ -20,6 +20,7 @@
 	const adminNavItems = [
 		{ href: '/admin/busca', label: 'Busca por Código', icon: Search },
 		{ href: '/admin/diarias', label: 'Análise de Diárias', icon: ShieldCheck },
+		{ href: '/admin/configuracoes', label: 'Configurações Gerais', icon: Settings },
 		{ href: '/admin/configuracoes/faixas', label: 'Faixas de Preço', icon: Settings },
 		{ href: '/admin/usuarios', label: 'Gestão de Usuários', icon: Users },
 	];

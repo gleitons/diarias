@@ -114,13 +114,25 @@
 						/>
 					</div>
 				</div>
-				<div class="space-y-2">
-					<label for="bancoContaNum" class="text-sm font-semibold text-slate-700">Nº da Conta</label>
-					<input 
-						type="text" id="bancoContaNum" name="bancoContaNum" 
-						value={data.user?.bancoContaNum ?? ''}
-						class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-					/>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="space-y-2">
+						<label for="bancoContaNum" class="text-sm font-semibold text-slate-700">Nº da Conta</label>
+						<input 
+							type="text" id="bancoContaNum" name="bancoContaNum" 
+							value={data.user?.bancoContaNum ?? ''}
+							class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+						/>
+					</div>
+					<div class="space-y-2">
+						<label for="bancoTipoConta" class="text-sm font-semibold text-slate-700">Tipo de Conta</label>
+						<select 
+							id="bancoTipoConta" name="bancoTipoConta" 
+							class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+						>
+							<option value="Corrente" selected={data.user?.bancoTipoConta === 'Corrente'}>Conta Corrente</option>
+							<option value="Poupança" selected={data.user?.bancoTipoConta === 'Poupança'}>Conta Poupança</option>
+						</select>
+					</div>
 				</div>
 			</div>
 		</section>

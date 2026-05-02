@@ -6,9 +6,11 @@
 	let { data, form } = $props();
 	
 	let isSaving = $state(false);
+	let isSearchingDistance = $state(false);
 	let distancia = $state(0);
 	let quantidade = $state(1);
 	let tipoTransporte = $state('Oficial');
+	let veiculoParticular = $state(false);
 	
 	// Event loading
 	let eventCode = $state('');
@@ -37,6 +39,37 @@
 		}
 	}
 
+	async function lookupDistance() {
+		if (!destinoCidadeUf || destinoCidadeUf.length < 3) return;
+		
+		const parts = destinoCidadeUf.split(' - ');
+		const city = parts[0];
+		const uf = parts[1];
+		
+		const cached = data.destinations?.find(d => 
+			d.city.toLowerCase() === city.trim().toLowerCase() && 
+			(!uf || d.state.toLowerCase() === uf.trim().toLowerCase())
+		);
+
+		if (cached) {
+			distancia = cached.distance * 2;
+			return;
+		}
+
+		isSearchingDistance = true;
+		try {
+			const res = await fetch(`/api/distancia?destino=${encodeURIComponent(city.trim())}&uf=${encodeURIComponent(uf?.trim() || 'MG')}`);
+			const json = await res.json();
+			if (json.distance) {
+				distancia = json.distance * 2;
+			}
+		} catch (e) {
+			console.error('Erro ao buscar distância:', e);
+		} finally {
+			isSearchingDistance = false;
+		}
+	}
+
 	// Derived calculations
 	let valorUnitario = $derived.by(() => {
 		if (!data.priceZones) return 0;
@@ -50,7 +83,7 @@
 
 <div class="space-y-6 pb-12">
 	<header class="flex justify-between items-start">
-		<div>
+		<div id="topo">
 			<h2 class="text-2xl font-bold text-slate-800">Solicitar Diária</h2>
 			<p class="text-slate-500">Preencha os dados da sua viagem para solicitar a diária (Anexo II).</p>
 		</div>
@@ -124,10 +157,17 @@
 						<input 
 							type="text" id="destinoCidadeUf" name="destinoCidadeUf" 
 							bind:value={destinoCidadeUf}
+							list="destinations-list"
+							onblur={lookupDistance}
 							required
 							placeholder="Ex: Belo Horizonte - MG"
 							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
 						/>
+						<datalist id="destinations-list">
+							{#each data.destinations as d}
+								<option value="{d.city} - {d.state}"></option>
+							{/each}
+						</datalist>
 					</div>
 					<div class="space-y-2">
 						<label for="objetivoViagem" class="text-sm font-semibold text-slate-700">Objetivo da Viagem</label>
@@ -165,19 +205,33 @@
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<div class="space-y-2">
 							<label for="dataSaida" class="text-sm font-semibold text-slate-700">Data de Saída</label>
-							<input 
-								type="date" id="dataSaida" name="dataSaida" 
-								required
-								class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-							/>
+							<div class="grid grid-cols-3 gap-2">
+								<input 
+									type="date" id="dataSaida" name="dataSaida" 
+									required
+									class="col-span-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+								/>
+								<input 
+									type="time" id="horaSaida" name="horaSaida" 
+									required
+									class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+								/>
+							</div>
 						</div>
 						<div class="space-y-2">
 							<label for="dataRetorno" class="text-sm font-semibold text-slate-700">Data de Retorno</label>
-							<input 
-								type="date" id="dataRetorno" name="dataRetorno" 
-								required
-								class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-							/>
+							<div class="grid grid-cols-3 gap-2">
+								<input 
+									type="date" id="dataRetorno" name="dataRetorno" 
+									required
+									class="col-span-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+								/>
+								<input 
+									type="time" id="horaRetorno" name="horaRetorno" 
+									required
+									class="px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+								/>
+							</div>
 						</div>
 					</div>
 
@@ -208,15 +262,37 @@
 						{/if}
 					</div>
 
-					<div class="pt-4 border-t border-slate-50">
+					<div class="pt-4 border-t border-slate-50 space-y-4">
 						<label class="flex items-center gap-3 cursor-pointer group">
 							<div class="relative flex items-center">
-								<input type="checkbox" name="veiculoParticular" class="peer sr-only" />
+								<input type="checkbox" name="veiculoParticular" bind:checked={veiculoParticular} class="peer sr-only" />
 								<div class="w-12 h-6 bg-slate-200 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
 								<div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-6 transition-transform shadow-sm"></div>
 							</div>
 							<span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">Viagem em veículo particular</span>
 						</label>
+
+						{#if veiculoParticular}
+							<div class="grid grid-cols-1 gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100 animate-in fade-in slide-in-from-top-2">
+								<div class="space-y-2">
+									<label for="dadosVeiculoProprio" class="text-sm font-semibold text-slate-700">Dados do Veículo (Marca, Modelo, Placa)</label>
+									<input 
+										type="text" id="dadosVeiculoProprio" name="dadosVeiculoProprio" required
+										placeholder="Ex: Fiat Uno - ABC-1234"
+										class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+									/>
+								</div>
+								<div class="space-y-2">
+									<label for="justificativaVeiculoParticular" class="text-sm font-semibold text-slate-700">Justificativa do uso de veículo particular</label>
+									<textarea 
+										id="justificativaVeiculoParticular" name="justificativaVeiculoParticular" required
+										rows="2"
+										placeholder="Explique por que não está utilizando transporte oficial..."
+										class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+									></textarea>
+								</div>
+							</div>
+						{/if}
 					</div>
 				</div>
 			</section>
@@ -237,9 +313,15 @@
 								<input 
 									type="number" id="distanciaIdaVolta" name="distanciaIdaVolta" 
 									bind:value={distancia}
-									min="0"
-									class="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-lg"
+									required min="0" step="0.1"
+									class={cn(
+										"w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-lg",
+										isSearchingDistance && "animate-pulse bg-blue-50 border-blue-200"
+									)}
 								/>
+								{#if isSearchingDistance}
+									<p class="text-[10px] text-blue-600 font-bold animate-pulse uppercase tracking-widest mt-1">Buscando distância...</p>
+								{/if}
 								<span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">KM</span>
 							</div>
 							<p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">O valor unitário é baseado em {distancia / 2}km (Ida)</p>
@@ -280,20 +362,24 @@
 							</span>
 						</div>
 					</div>
-
-					<button 
-						type="submit" 
-						disabled={isSaving}
-						class="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 mt-4"
-					>
-						{#if isSaving}
-							<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-							Processando...
-						{:else}
-							<Send size={20} />
-							Enviar Solicitação
-						{/if}
-					</button>
+					
+					<input type="hidden" name="valorTotalSolicitado" value={valorTotal} />
+					
+					<a href="#topo">
+						<button
+							type="submit"
+							disabled={isSaving}
+							class="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 mt-4"
+						>
+							{#if isSaving}
+								<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+								Processando...
+							{:else}
+								<Send size={20} />
+								Enviar Solicitação
+							{/if}
+						</button>
+					</a>
 				</div>
 			</section>
 

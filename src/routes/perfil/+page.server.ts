@@ -26,6 +26,7 @@ export const actions: Actions = {
 		const bancoAgenciaCod = formData.get('bancoAgenciaCod') as string;
 		const bancoAgenciaNum = formData.get('bancoAgenciaNum') as string;
 		const bancoContaNum = formData.get('bancoContaNum') as string;
+		const bancoTipoConta = formData.get('bancoTipoConta') as string;
 		const phone = formData.get('phone') as string;
 
 		try {
@@ -39,6 +40,7 @@ export const actions: Actions = {
 					bancoAgenciaCod,
 					bancoAgenciaNum,
 					bancoContaNum,
+					bancoTipoConta,
 					phone,
 				})
 				.where(eq(user.id, locals.user.id));

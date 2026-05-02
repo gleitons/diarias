@@ -54,8 +54,9 @@ export const actions: Actions = {
 		const anexoComprovanteParticipacao = formData.get('anexoComprovanteParticipacao') === 'on';
 
 		try {
-			await db.insert(accountabilityReports).values({
-				dailyRequestId: id,
+			const existing = await db.select().from(accountabilityReports).where(eq(accountabilityReports.dailyRequestId, id)).get();
+
+			const reportData = {
 				quantidadePernoites,
 				dataHoraPartida,
 				dataHoraChegada,
@@ -67,7 +68,18 @@ export const actions: Actions = {
 				anexoComprovanteParticipacao,
 				dataRelatorio: new Date(),
 				status: 'pendente'
-			});
+			};
+
+			if (existing) {
+				await db.update(accountabilityReports)
+					.set(reportData)
+					.where(eq(accountabilityReports.id, existing.id));
+			} else {
+				await db.insert(accountabilityReports).values({
+					dailyRequestId: id,
+					...reportData
+				});
+			}
 
 			return { success: true };
 		} catch (e) {

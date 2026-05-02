@@ -46,6 +46,26 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
 	};
 
 	// --- HEADER ---
+	if (settings.logoUrl) {
+		try {
+			const logoBytes = await fetch(settings.logoUrl).then(res => res.arrayBuffer());
+			let logoImage;
+			if (settings.logoUrl.toLowerCase().endsWith('.png')) {
+				logoImage = await pdfDoc.embedPng(logoBytes);
+			} else {
+				logoImage = await pdfDoc.embedJpg(logoBytes);
+			}
+			page.drawImage(logoImage, {
+				x: margin + 10,
+				y: height - 70,
+				width: 50,
+				height: 50,
+			});
+		} catch (e) {
+			console.error('Error embedding logo Anexo II:', e);
+		}
+	}
+
 	drawText(settings.prefeituraNome.toUpperCase(), width/2 - 150, 40, 14, true);
 	drawText(settings.prefeituraEndereco.toUpperCase(), width/2 - 130, 55, 8);
 	drawText(`CEP ${settings.prefeituraCep}`, width/2 - 40, 68, 8);
@@ -115,8 +135,8 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
 	drawText(user.bancoAgenciaNum || '', margin + 255, currentY + 22, 9, true);
 	drawLine(margin + 350, currentY, margin + 350, currentY + 35);
 
-	drawText(`Nº da Conta PP:`, margin + 380, currentY + 10, 8);
-	drawText(user.bancoContaNum || '', margin + 380, currentY + 22, 9, true);
+	drawText(`Nº da Conta / Tipo:`, margin + 360, currentY + 10, 8);
+	drawText(`${user.bancoContaNum || ''} (${user.bancoTipoConta || ''})`, margin + 360, currentY + 22, 9, true);
 	currentY += 35;
 	drawLine(margin, currentY, width - margin, currentY);
 
@@ -131,8 +151,8 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
 
 	// Viagens Previstas
 	drawText('Viagens Previstas Período:', margin + 5, currentY + 12, 9);
-	drawText(`Saída: ${new Date(request.dataSaida).toLocaleDateString('pt-BR')}`, margin + 80, currentY + 25, 10, true);
-	drawText(`Retorno: ${new Date(request.dataRetorno).toLocaleDateString('pt-BR')}`, margin + 240, currentY + 25, 10, true);
+	drawText(`Saída: ${new Date(request.dataSaida).toLocaleDateString('pt-BR')} às ${request.horaSaida || '__:__'}`, margin + 80, currentY + 25, 10, true);
+	drawText(`Retorno: ${new Date(request.dataRetorno).toLocaleDateString('pt-BR')} às ${request.horaRetorno || '__:__'}`, margin + 280, currentY + 25, 10, true);
 	currentY += 35;
 	drawLine(margin, currentY, width - margin, currentY);
 
@@ -158,7 +178,7 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
 	currentY += 55;
 	drawLine(margin, currentY, width - margin, currentY);
 
-	drawText(`Valor Indenização: R$ ${request.valorIndenizacaoKm || '0,80'}/Km Rodado`, margin + 5, currentY + 15, 9);
+	drawText(`Valor Indenização: R$ ${Number(request.valorIndenizacaoKm || 0.8).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/Km Rodado`, margin + 5, currentY + 15, 9);
 	drawLine(margin + 210, currentY, margin + 210, currentY + rowHeight);
 	currentY += rowHeight;
 	drawLine(margin, currentY, width - margin, currentY);
@@ -217,9 +237,23 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
 	drawText('Secretário', margin + 45, currentY + 90, 9);
 	
 	drawLine(width - margin - 130, currentY + 80, width - margin - 15, currentY + 80);
-	drawText('Prefeito Municipal', width - margin - 110, currentY + 90, 9);
+	if (settings.prefeitoNome) {
+		drawText(settings.prefeitoNome.toUpperCase(), width - margin - 130, currentY + 90, 8, true);
+		drawText('Prefeito Municipal', width - margin - 110, currentY + 100, 8);
+	} else {
+		drawText('Prefeito Municipal', width - margin - 110, currentY + 90, 9);
+	}
 
-	return await pdfDoc.save();
+	// Footer Data de Impressão
+	drawText(`Impresso em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`, margin, 810, 7);
+
+	return Buffer.from(await pdfDoc.save());
+	// const blob = new Blob([await pdfDoc.save()], { type: 'application/pdf' });
+	// const blobUrl = URL.createObjectURL(blob);
+	// window.open(blobUrl, '_blank');
+
+
+
 }
 
 export async function generateAnexoIII(request: Request, user: User, settings: Settings, report: Report) {
@@ -262,6 +296,26 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
 	};
 
 	// --- HEADER ---
+	if (settings.logoUrl) {
+		try {
+			const logoBytes = await fetch(settings.logoUrl).then(res => res.arrayBuffer());
+			let logoImage;
+			if (settings.logoUrl.toLowerCase().endsWith('.png')) {
+				logoImage = await pdfDoc.embedPng(logoBytes);
+			} else {
+				logoImage = await pdfDoc.embedJpg(logoBytes);
+			}
+			page.drawImage(logoImage, {
+				x: margin + 10,
+				y: height - 70,
+				width: 50,
+				height: 50,
+			});
+		} catch (e) {
+			console.error('Error embedding logo Anexo III:', e);
+		}
+	}
+
 	drawText(settings.prefeituraNome.toUpperCase(), width/2 - 150, 40, 14, true);
 	drawText(settings.prefeituraEndereco.toUpperCase(), width/2 - 130, 55, 8);
 	drawText(`CEP ${settings.prefeituraCep}`, width/2 - 40, 68, 8);
@@ -389,6 +443,9 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
 	drawLine(width/2 - 100, currentY + 90, width/2 + 100, currentY + 90);
 	drawText('Assinatura Servidor Público', width/2 - 60, currentY + 105, 10);
 
+	// Footer Data de Impressão
+	drawText(`Impresso em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`, margin, 810, 7);
+
 	return await pdfDoc.save();
 }
 
@@ -433,6 +490,26 @@ export async function generateAnexoIV(request: Request, user: User, settings: Se
 	};
 
 	// --- HEADER ---
+	if (settings.logoUrl) {
+		try {
+			const logoBytes = await fetch(settings.logoUrl).then(res => res.arrayBuffer());
+			let logoImage;
+			if (settings.logoUrl.toLowerCase().endsWith('.png')) {
+				logoImage = await pdfDoc.embedPng(logoBytes);
+			} else {
+				logoImage = await pdfDoc.embedJpg(logoBytes);
+			}
+			page.drawImage(logoImage, {
+				x: margin + 10,
+				y: height - 70,
+				width: 50,
+				height: 50,
+			});
+		} catch (e) {
+			console.error('Error embedding logo Anexo IV:', e);
+		}
+	}
+
 	drawText(settings.prefeituraNome.toUpperCase(), width/2 - 150, 40, 14, true);
 	drawText(settings.prefeituraEndereco.toUpperCase(), width/2 - 130, 55, 8);
 	drawText(`CEP ${settings.prefeituraCep}`, width/2 - 40, 68, 8);
@@ -515,10 +592,19 @@ export async function generateAnexoIV(request: Request, user: User, settings: Se
 
 	// Final Footer
 	const homData = report.homologacaoData ? new Date(report.homologacaoData).toLocaleDateString('pt-BR') : '__/__/____';
-	drawText(`Lagoa dos Patos – MG, ${homData}`, margin + 10, currentY + 10, 10, true);
+	drawText(`${settings.prefeituraNome.split(' ')[2] || 'Cidade'} – MG, ${homData}`, margin + 10, currentY + 10, 10, true);
 	
-	drawLine(width - margin - 180, currentY + 50, width - margin - 10, currentY + 50);
-	drawText('PREFEITO MUNICIPAL', width - margin - 150, currentY + 65, 10, true);
+	const sigX = width - margin - 180;
+	drawLine(sigX, currentY + 50, sigX + 170, currentY + 50);
+	if (settings.prefeitoNome) {
+		drawText(settings.prefeitoNome.toUpperCase(), sigX + 10, currentY + 65, 9, true);
+		drawText('PREFEITO MUNICIPAL', sigX + 35, currentY + 75, 8);
+	} else {
+		drawText('PREFEITO MUNICIPAL', sigX + 35, currentY + 65, 10, true);
+	}
+
+	// Footer Data de Impressão
+	drawText(`Impresso em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`, margin, 810, 7);
 
 	return await pdfDoc.save();
 }
