@@ -21,6 +21,9 @@ export const user = sqliteTable('user', {
 	bancoContaNum: text('banco_conta_num'),
 	bancoTipoConta: text('banco_tipo_conta'), // Corrente | Poupança
 	phone: text('phone'),
+	banned: integer('banned', { mode: 'boolean' }).$default(() => false),
+	banReason: text('ban_reason'),
+	banExpires: integer('ban_expires', { mode: 'timestamp' }),
 });
 
 export const session = sqliteTable('session', {
@@ -34,6 +37,7 @@ export const session = sqliteTable('session', {
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
+	impersonatedBy: text('impersonated_by'),
 });
 
 export const account = sqliteTable('account', {
@@ -103,6 +107,7 @@ export const dailyRequests = sqliteTable('daily_requests', {
 	valorTotalAprovado: real('valor_total_aprovado'),
 
 	status: text('status').$default(() => 'pendente').notNull(), // pendente | aprovada | rejeitada
+	justificativaRejeicao: text('justificativa_rejeicao'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 

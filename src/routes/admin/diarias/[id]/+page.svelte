@@ -14,7 +14,8 @@
 		FileDown,
 		Check,
 		ClipboardCheck,
-		Clock
+		Clock,
+		AlertCircle
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 
@@ -185,47 +186,83 @@
 				</div>
 
 				{#if request.status === 'pendente'}
-					<div class="flex gap-4 border-t border-slate-100 bg-slate-50 p-8">
-						<form
-							method="POST"
-							action="?/approveRequest"
-							use:enhance={() => {
-								isProcessing = true;
-								return async ({ update }) => {
-									isProcessing = false;
-									update();
-								};
-							}}
-							class="flex-1"
-						>
-							<button
-								disabled={isProcessing}
-								class="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700"
+					<div class="flex flex-col gap-6 border-t border-slate-100 bg-slate-50 p-8">
+						<div class="space-y-3">
+							<label 
+								for="justificativaRejeicao" 
+								class="flex items-center gap-2 text-xs font-black tracking-widest text-slate-400 uppercase"
 							>
-								<CheckCircle2 size={20} />
-								Aprovar Solicitação
-							</button>
-						</form>
-						<form
-							method="POST"
-							action="?/rejectRequest"
-							use:enhance={() => {
-								isProcessing = true;
-								return async ({ update }) => {
-									isProcessing = false;
-									update();
-								};
-							}}
-							class="flex-1"
-						>
-							<button
-								disabled={isProcessing}
-								class="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-white py-4 font-bold text-red-600 transition-all hover:bg-red-50"
+								<AlertCircle size={14} class="text-amber-500" />
+								Motivo da Rejeição (Caso deseje rejeitar)
+							</label>
+							<textarea 
+								id="justificativaRejeicao"
+								name="justificativaRejeicao"
+								form="reject-form"
+								rows="3"
+								required
+								placeholder="Explique por que esta solicitação está sendo rejeitada. Esta mensagem será exibida para o servidor para que ele possa realizar as correções necessárias."
+								class="w-full rounded-2xl border border-slate-200 p-4 text-sm focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none shadow-inner bg-white"
+							></textarea>
+						</div>
+
+						<div class="flex gap-4">
+							<form
+								method="POST"
+								action="?/approveRequest"
+								use:enhance={() => {
+									isProcessing = true;
+									return async ({ update }) => {
+										isProcessing = false;
+										update();
+									};
+								}}
+								class="flex-1"
 							>
+								<button
+									disabled={isProcessing}
+									class="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700 disabled:opacity-50"
+								>
+									<CheckCircle2 size={20} />
+									Aprovar Solicitação
+								</button>
+							</form>
+							<form
+								id="reject-form"
+								method="POST"
+								action="?/rejectRequest"
+								use:enhance={() => {
+									isProcessing = true;
+									return async ({ update }) => {
+										isProcessing = false;
+										update();
+									};
+								}}
+								class="flex-1"
+							>
+								<button
+									disabled={isProcessing}
+									class="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-white py-4 font-bold text-red-600 transition-all hover:bg-red-50 disabled:opacity-50"
+								>
+									<XCircle size={20} />
+									Rejeitar Pedido
+								</button>
+							</form>
+						</div>
+					</div>
+				{:else if request.status === 'rejeitada' && request.justificativaRejeicao}
+					<div class="border-t border-red-100 bg-red-50/50 p-8">
+						<div class="flex items-start gap-3">
+							<div class="mt-1 text-red-600">
 								<XCircle size={20} />
-								Rejeitar Pedido
-							</button>
-						</form>
+							</div>
+							<div class="space-y-1">
+								<p class="text-xs font-black tracking-widest text-red-400 uppercase">Motivo da Rejeição</p>
+								<p class="text-sm font-medium text-red-700 leading-relaxed italic">
+									"{request.justificativaRejeicao}"
+								</p>
+							</div>
+						</div>
 					</div>
 				{/if}
 			</section>

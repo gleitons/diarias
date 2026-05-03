@@ -119,7 +119,7 @@
 						<input 
 							type="number" id="quantidadePernoites" name="quantidadePernoites" 
 							required min="0"
-							value={data.existingReport?.quantidadePernoites ?? ''}
+							value={data.existingReport?.quantidadePernoites ?? '1'}
 							placeholder="Ex: 1"
 							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold"
 						/>

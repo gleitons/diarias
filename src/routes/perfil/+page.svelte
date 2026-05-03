@@ -27,6 +27,7 @@
 			return async ({ update }) => {
 				isSaving = false;
 				await update();
+				window.location.href = '/'
 			};
 		}}
 		class="space-y-6"

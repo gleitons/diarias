@@ -3,6 +3,20 @@
 	import { cn } from '$lib/utils';
 
 	let { data } = $props();
+	let searchQuery = $state('');
+
+	let filteredEvents = $derived(
+		data.events.filter((event: any) => {
+			const query = searchQuery.toLowerCase();
+			return (
+				event.name.toLowerCase().includes(query) ||
+				event.code.toLowerCase().includes(query) ||
+				event.city.toLowerCase().includes(query) ||
+				event.state.toLowerCase().includes(query) ||
+				(event.description?.toLowerCase().includes(query) || false)
+			);
+		})
+	);
 </script>
 
 <div class="space-y-8 pb-12">
@@ -20,8 +34,18 @@
 		</a>
 	</header>
 
+	<div class="relative group max-w-2xl">
+		<Search class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+		<input 
+			type="text" 
+			bind:value={searchQuery}
+			placeholder="Pesquisar por nome, código, cidade ou descrição..."
+			class="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-6 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+		/>
+	</div>
+
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-		{#each data.events as event}
+		{#each filteredEvents as event}
 			<div class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all group overflow-hidden flex flex-col">
 				<div class="p-6 flex-1 space-y-4">
 					<div class="flex justify-between items-start gap-4">
@@ -68,19 +92,37 @@
 				</div>
 			</div>
 		{:else}
-			<div class="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-				<div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
-					<Search size={40} />
+			{#if searchQuery && data.events.length > 0}
+				<div class="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+					<div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-slate-300 shadow-sm">
+						<Search size={40} />
+					</div>
+					<div>
+						<p class="text-slate-800 font-bold text-xl">Nenhum evento encontrado</p>
+						<p class="text-slate-500 text-sm">Não encontramos nenhum evento que coincida com "{searchQuery}".</p>
+					</div>
+					<button 
+						onclick={() => searchQuery = ''}
+						class="text-blue-600 font-bold hover:underline text-sm"
+					>
+						Limpar pesquisa
+					</button>
 				</div>
-				<div>
-					<p class="text-slate-800 font-bold text-xl">Nenhum evento cadastrado</p>
-					<p class="text-slate-500 text-sm">Crie eventos para cidades que você visita com frequência.</p>
+			{:else}
+				<div class="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+					<div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
+						<Search size={40} />
+					</div>
+					<div>
+						<p class="text-slate-800 font-bold text-xl">Nenhum evento cadastrado</p>
+						<p class="text-slate-500 text-sm">Crie eventos para cidades que você visita com frequência.</p>
+					</div>
+					<a href="/eventos/novo" class="text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm">
+						Comece criando seu primeiro evento
+						<ArrowRight size={16} />
+					</a>
 				</div>
-				<a href="/eventos/novo" class="text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm">
-					Comece criando seu primeiro evento
-					<ArrowRight size={16} />
-				</a>
-			</div>
+			{/if}
 		{/each}
 	</div>
 </div>

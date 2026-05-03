@@ -46,10 +46,19 @@ export const actions: Actions = {
 
 		return { success: true };
 	},
-	rejectRequest: async ({ params, locals }) => {
+	rejectRequest: async ({ request, params, locals }) => {
 		if (!locals.user) return fail(401);
 		const id = parseInt(params.id);
-		await db.update(dailyRequests).set({ status: 'rejeitada' }).where(eq(dailyRequests.id, id));
+		const formData = await request.formData();
+		const justificativaRejeicao = formData.get('justificativaRejeicao') as string;
+
+		await db.update(dailyRequests)
+			.set({ 
+				status: 'rejeitada',
+				justificativaRejeicao
+			})
+			.where(eq(dailyRequests.id, id));
+			
 		return { success: true };
 	},
 	homologate: async ({ request, params, locals }) => {

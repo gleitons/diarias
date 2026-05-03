@@ -20,7 +20,8 @@
 			error = authError.message || "Erro ao fazer login. Verifique suas credenciais.";
 			isLoading = false;
 		} else {
-			goto("/");
+			// goto("/");
+			window.location.href = "/";
 		}
 	}
 </script>
