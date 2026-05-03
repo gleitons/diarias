@@ -2,15 +2,20 @@
 	import { FilePlus, ClipboardCheck, History, ShieldAlert, ArrowRight } from "lucide-svelte";
 	
 	let { data } = $props();
+	// console.log(data);
 </script>
 
 <div class="space-y-12 py-6">
 	<!-- Hero Section -->
-	<section class="relative overflow-hidden bg-blue-600 rounded-[2.5rem] p-8 md:p-16 text-white shadow-2xl shadow-blue-200">
-		<div class="relative z-10 max-w-2xl space-y-6">
+	<section class="relative overflow-hidden   rounded-[2.5rem] p-8 md:p-8 text-black shadow-2xl shadow-blue-200">
+		<div class="relative z-10 max-w-2xl space-y-6 text-black">
 			{#if data.user}
 				<h2 class="text-4xl md:text-5xl font-black leading-tight">Olá, {data.user.name.split(' ')[0]}!</h2>
-				<p class="text-blue-100 text-lg font-medium">Bem-vindo ao Sistema de Gestão de Diárias. O que deseja fazer hoje?</p>
+				<p class=" text-lg font-medium">Bem-vindo ao Sistema de Gestão de Diárias. O que deseja fazer hoje?</p>
+				{#if !data.user.bancoNome}
+					<p class=" text-lg font-medium">Antes de iniciar suas solicitações de diárias você deve atualizar seu perfil e dados bancários.</p>
+					<a href="/perfil" class="px-5 w-fit py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 flex items-center gap-2">Atualizar Perfil</a>
+				{/if}
 			{:else}
 				<h2 class="text-4xl md:text-5xl font-black leading-tight">Gestão de Diárias Municipal</h2>
 				<p class="text-blue-100 text-lg font-medium">Sistema oficial para solicitação e prestação de contas de viagens da Prefeitura de Lagoa dos Patos.</p>

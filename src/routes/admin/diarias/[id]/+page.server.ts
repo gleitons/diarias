@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { dailyRequests, user, accountabilityReports } from '$lib/server/db/schema';
+import { dailyRequests, user,  accountabilityReports } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw redirect(303, '/');
 	}
 	
-	const id = parseInt(params.id);
+	const codigo = params.id;
 	const data = await db.select({
 		request: dailyRequests,
 		user: user,
@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	.from(dailyRequests)
 	.innerJoin(user, eq(dailyRequests.userId, user.id))
 	.leftJoin(accountabilityReports, eq(dailyRequests.id, accountabilityReports.dailyRequestId))
-	.where(eq(dailyRequests.id, id))
+	.where(eq(dailyRequests.code, codigo))
 	.get();
 	
 	if (!data) throw redirect(303, '/admin/diarias');
@@ -42,7 +42,7 @@ export const actions: Actions = {
 				valorDiariasAprovado: request.valorDiariasSolicitado,
 				valorTotalAprovado: request.valorTotalSolicitado
 			})
-			.where(eq(dailyRequests.id, id));
+			.where(eq(dailyRequests.code, params.id));
 
 		return { success: true };
 	},
@@ -57,7 +57,7 @@ export const actions: Actions = {
 				status: 'rejeitada',
 				justificativaRejeicao
 			})
-			.where(eq(dailyRequests.id, id));
+			.where(eq(dailyRequests.code, params.id));
 			
 		return { success: true };
 	},

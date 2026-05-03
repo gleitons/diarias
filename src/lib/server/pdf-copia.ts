@@ -1,7 +1,6 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { dailyRequests, user, settings, accountabilityReports } from './db/schema';
 import  {formatCpf, formatPhone}  from '$lib/functions/all';
-import extenso from 'extenso';
 
 type Request = typeof dailyRequests.$inferSelect;
 type User = typeof user.$inferSelect;
@@ -16,7 +15,6 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
 
 	const { width, height } = page.getSize();
 	const margin = 40;
-	const xRight = width - margin;
 
 	const drawText = (text: string, x: number, y: number, size = 9, isBold = false) => {
 		page.drawText(text || '', {
@@ -69,247 +67,194 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
 		}
 	}
 
-	drawText(settings.prefeituraNome.toUpperCase(), 120, 40, 14, true);
-	drawText(settings.prefeituraEndereco.toUpperCase(), 150, 55, 8);
-	drawText(`CEP ${settings.prefeituraCep}`, 260, 68, 8);
-	drawLine(margin, 75, xRight, 75, 1);
+	drawText(settings.prefeituraNome.toUpperCase(), width/2 - 150, 40, 14, true);
+	drawText(settings.prefeituraEndereco.toUpperCase(), width/2 - 130, 55, 8);
+	drawText(`CEP ${settings.prefeituraCep}`, width/2 - 40, 68, 8);
+	drawLine(margin, 75, width - margin, 75, 1.5);
 	
-	drawText('LEI NO. 766/2017 (Decreto no.32/2019)', 180, 90, 11, true);
-	drawText('ANEXO II - FORMULÁRIO DE SOLICITAÇÃO DE DIÁRIA', 130, 105, 11, true);
-	drawLine(130, 107, 455, 107, 1); // Underline
+	drawText('LEI NO. 766/2017 (Decreto no. 32/2019)', width/2 - 100, 90, 10, true);
+	drawText('ANEXO II - FORMULÁRIO DE SOLICITAÇÃO DE DIÁRIA', width/2 - 130, 105, 11, true);
 
 	// --- MAIN TABLE BOX ---
 	const boxStart = 115;
-	const boxWidth = xRight - margin;
+	const boxWidth = width - (margin * 2);
+	drawRect(margin, boxStart, boxWidth, 680);
 
-	const iM = margin + 3; // inner margin left
-	const iR = xRight - 3; // inner margin right
-	const iT = boxStart + 3; // inner margin top
+	// Row: Prefeitura / Solicitação / Exercício
+	drawLine(margin, boxStart + 45, width - margin, boxStart + 45);
+	drawLine(margin + 100, boxStart, margin + 100, boxStart + 45);
+	drawLine(margin + 265, boxStart, margin + 265, boxStart + 45);
+	
+	drawText('Prefeitura', margin + 25, boxStart + 15, 8, true);
+	drawText('Municipal de', margin + 20, boxStart + 25, 8, true);
+	drawText('Lagoa dos Patos', margin + 15, boxStart + 35, 8, true);
+	
+	drawText('Solicitação de', margin + 130, boxStart + 18, 10, true);
+	drawText('Diárias/Indenização/Passagem', margin + 115, boxStart + 30, 10, true);
+	
+	drawText('Exercício', margin + 270, boxStart + 12, 8);
+	drawText(request.exercicio.toString(), margin + 350, boxStart + 18, 10, true);
+	drawLine(margin + 265, boxStart + 22, width - margin, boxStart + 22);
+	drawText('Data:', margin + 270, boxStart + 35, 8);
+	drawText(new Date(request.dataSolicitacao).toLocaleDateString('pt-BR'), margin + 310, boxStart + 35, 10, true);
 
-	// Row 1
-	drawLine(180, iT, 180, boxStart + 45);
-	drawLine(400, iT, 400, boxStart + 45);
-	
-	drawText('Prefeitura de Lagoa dos Patos MG'.toUpperCase(), 48, boxStart + 15, 6.5, false);
-	drawText('COD:' + request.code.toString().padStart(4, '0'), 80, boxStart + 27, 8, true);
-	drawText('SECRETARIA: ' + (user?.secretariaOrgao?.toUpperCase() || ''), 48, boxStart + 39, 8, true);
-	
-	drawText('Solicitação de', 255, boxStart + 20, 11, false);
-	drawText('Diárias/Indenização/Passagem', 210, boxStart + 35, 11, false);
-	
-	drawLine(400, boxStart + 22, iR, boxStart + 22);
-	drawText('Exercício:', 405, boxStart + 14, 10);
-	drawText(request.exercicio.toString(), 460, boxStart + 18, 11, true);
-	
-	drawText('Data:', 405, boxStart + 36, 10);
-	drawText(new Date(request.dataSolicitacao).toLocaleDateString('pt-BR'), 460, boxStart + 36, 11, true);
+	// Personal Info
+	const rowHeight = 25;
+	let currentY = boxStart + 45;
+	drawText(`Nome: ${user.name}`, margin + 5, currentY + 15, 10);
+	drawLine(margin + 315, currentY, margin + 315, currentY + rowHeight);
+	drawText(`Matrícula: ${user.matricula || ''}`, margin + 320, currentY + 15, 10);
+	currentY += rowHeight;
+	drawLine(margin, currentY, width - margin, currentY);
 
-	drawLine(iM, boxStart + 45, iR, boxStart + 45);
+	drawText(`Unidade Administrativa de Exercício:`, margin + 5, currentY + 10, 8);
+	drawText(user.unidadeAdministrativa || '', margin + 5, currentY + 22, 10, true);
+	drawLine(margin + 315, currentY, margin + 315, currentY + 35);
+	drawText(`CPF:`, margin + 320, currentY + 10, 8);
+	drawText(formatCpf(user.cpf || ''), margin + 320, currentY + 22, 10, true);
+	currentY += 35;
+	drawLine(margin, currentY, width - margin, currentY);
 
-	// Row 2
-	let currentY = boxStart + 45; // 160
-	drawLine(400, currentY, 400, currentY + 25);
-	drawText('Nome: ', 45, currentY + 17, 10);
-	drawText(user.name.toUpperCase(), 80, currentY + 17, 10, true);
-	drawText('Matrícula: ' + (user.matricula || ''), 405, currentY + 17, 10, true);
-	currentY += 25; // 185
-	drawLine(iM, currentY, iR, currentY);
+	drawText(`Cargo Municipal:`, margin + 5, currentY + 10, 8);
+	drawText(user.cargo || '', margin + 5, currentY + 22, 10, true);
+	drawLine(margin + 315, currentY, margin + 315, currentY + 35);
+	drawText(`Quantidade diárias:`, margin + 325, currentY + 10, 8);
+	drawText(request.quantidadeDiarias.toString(), margin + 380, currentY + 25, 14, true);
+	currentY += 35;
+	drawLine(margin, currentY, width - margin, currentY);
 
-	// Row 3
-	drawLine(400, currentY, 400, currentY + 25);
-	drawText('Unidade Administrativa de Exercício:', 45, currentY + 17, 10);
-	drawText(user.unidadeAdministrativa || '', 220, currentY + 17, 10, true);
-	drawText('CPF:', 405, currentY + 17, 10);
-	drawText(formatCpf(user.cpf || ''), 440, currentY + 17, 10, true);
-	currentY += 25;
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 4
-	drawLine(400, currentY, 400, currentY + 25);
-	drawText('Cargo Municipal:', 45, currentY + 17, 10);
-	drawText(user.cargo || '', 135, currentY + 17, 10, true);
-	drawText('Quantidade diárias:', 410, currentY + 17, 10);
-	drawText(`${request.quantidadeDiarias.toString()} ` + extenso(request.quantidadeDiarias.toString()), 515, currentY + 17, 10, true);
-	currentY += 25; // 255
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 5
-	drawLine(180, currentY, 180, currentY + 25);
-	drawLine(290, currentY, 290, currentY + 25);
-	drawLine(400, currentY, 400, currentY + 25);
+	// Bank Row
+	drawText(`Nome do Banco`, margin + 30, currentY + 10, 8);
+	drawText(user.bancoNome || '', margin + 20, currentY + 22, 9, true);
+	drawLine(margin + 120, currentY, margin + 120, currentY + 35);
 	
-	drawText('Banco:', 45, currentY + 17, 10);
-	drawText(user.bancoNome || '', 85, currentY + 17, 10, true);
-	
-	drawText('Cód. Agência:', 185, currentY + 17, 10);
-	drawText(user.bancoAgenciaCod || '', 255, currentY + 17, 10, true);
-	
-	drawText('Nº Agência:', 295, currentY + 17, 10);
-	drawText(user.bancoAgenciaNum || '', 360, currentY + 17, 10, true);
-	
-	drawText('Nº da Conta PP:', 405, currentY + 17, 10);
-	drawText(user.bancoContaNum || '', 490, currentY + 17, 10, true);
-	currentY += 25; // 290
-	drawLine(iM, currentY, iR, currentY);
+	drawText(`Cód. Agência:`, margin + 130, currentY + 10, 8);
+	drawText(user.bancoAgenciaCod || '', margin + 140, currentY + 22, 9, true);
+	drawLine(margin + 235, currentY, margin + 235, currentY + 35);
 
-	// Row 6
-	drawText('Tipo de Diária:', 45, currentY + 17, 10);
+	drawText(`Nº Agência`, margin + 255, currentY + 10, 8);
+	drawText(user.bancoAgenciaNum || '', margin + 255, currentY + 22, 9, true);
+	drawLine(margin + 350, currentY, margin + 350, currentY + 35);
+
+	drawText(`Nº da Conta / Tipo:`, margin + 360, currentY + 10, 8);
+	drawText(`${user.bancoContaNum || ''} (${user.bancoTipoConta || ''})`, margin + 360, currentY + 22, 9, true);
+	currentY += 35;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	// Tipo de Diária
+	drawText('Tipo de Diária:', margin + 5, currentY + 12, 9, true);
 	const tipo = request.tipoDiaria;
-	drawText('( ' + (tipo === 'Antecipadas' ? 'x' : ' ') + ' ) Antecipadas', 130, currentY + 17, 10);
-	drawText('( ' + (tipo === 'Vencidas' ? 'x' : ' ') + ' ) Vencidas', 250, currentY + 17, 10);
-	drawText('( ' + (tipo === 'Indenização' ? 'x' : ' ') + ' ) Indenização', 370, currentY + 17, 10);
-	currentY += 25; // 325
-	drawLine(iM, currentY, iR, currentY);
+	drawText(`( ${tipo === 'Antecipadas' ? 'x' : ' '} ) Antecipadas`, margin + 50, currentY + 25, 9);
+	drawText(`( ${tipo === 'Vencidas' ? 'x' : ' '} ) Vencidas`, margin + 230, currentY + 25, 9);
+	drawText(`( ${tipo === 'Indenização' ? 'x' : ' '} ) Indenização`, margin + 360, currentY + 25, 9);
+	currentY += 35;
+	drawLine(margin, currentY, width - margin, currentY);
 
-	// Row 7
-	drawText('Viagens Previstas Período:', 45, currentY + 17, 10);
-	drawText('Saída: ' + new Date(request.dataSaida).toLocaleDateString('pt-BR'), 200, currentY + 17, 10, true);
-	drawText('Retorno: ' + new Date(request.dataRetorno).toLocaleDateString('pt-BR'), 330, currentY + 17, 10, true);
-	currentY += 25; // 360
-	drawLine(iM, currentY, iR, currentY);
+	// Viagens Previstas
+	drawText('Viagens Previstas Período:', margin + 5, currentY + 12, 9);
+	drawText(`Saída: ${new Date(request.dataSaida).toLocaleDateString('pt-BR')} às ${request.horaSaida || '__:__'}`, margin + 80, currentY + 25, 10, true);
+	drawText(`Retorno: ${new Date(request.dataRetorno).toLocaleDateString('pt-BR')} às ${request.horaRetorno || '__:__'}`, margin + 280, currentY + 25, 10, true);
+	currentY += 35;
+	drawLine(margin, currentY, width - margin, currentY);
 
-	// Row 8
-	drawText('Meio de Transporte: ', 45, currentY + 17, 10, true);
-	drawText('Veículo Oficial:  Sim ( ' + (request.meioTransporte === 'Oficial' ? 'x' : ' ') + ' )  Não ( ' + (request.meioTransporte !== 'Oficial' ? 'x' : ' ') + ' )  Placa: ' + (request.veiculoOficialPlaca || '_______'), 170, currentY + 17, 10);
+	// Meio de Transporte
+	drawText('Meio de Transporte_', margin + 250, currentY + 12, 9);
+	drawText(`Veículo Oficial:   Sim ( ${request.meioTransporte === 'Oficial' ? 'x' : ' '} )  Não ( ${request.meioTransporte !== 'Oficial' ? 'x' : ' '} )   Placa: ${request.veiculoOficialPlaca || '_______'}`, margin + 115, currentY + 25, 9);
+	drawLine(margin, currentY + 35, width - margin, currentY + 35);
+	drawText(`Viagem em transporte Intermunicipal:  Avião ( ) Ônibus ( ) Outro ( ) Van`, margin + 10, currentY + 48, 9);
+	currentY += 55;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	// Destino
+	drawText('Cidade de destino/UF - ' + (request.destinoCidadeUf || ''), width/2 - 100, currentY + 18, 11, true);
+	currentY += 30;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	// Particular
+	drawText(`Viagem em Veículo particular:  ( ${request.veiculoParticular ? 'x' : ' '} ) Sim, Justifique. ( ${!request.veiculoParticular ? 'x' : ' '} ) Não`, margin + 5, currentY + 12, 9);
+	drawText(`Justificativa: ${request.justificativaVeiculoParticular || ''}`, margin + 5, currentY + 25, 9);
+	drawLine(margin, currentY + 35, width - margin, currentY + 35);
+	drawText(`Distância entre a sede do município e local de destino de Ida e Volta:`, margin + 5, currentY + 45, 8);
+	drawText(`${request.distanciaIdaVolta} KM`, margin + 400, currentY + 45, 10, true);
+	currentY += 55;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	drawText(`Valor Indenização: R$ ${Number(request.valorIndenizacaoKm || 0.8).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/Km Rodado`, margin + 5, currentY + 15, 9);
+	drawLine(margin + 210, currentY, margin + 210, currentY + rowHeight);
+	currentY += rowHeight;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	drawText(`Dados veículo Próprio: ${request.dadosVeiculoProprio || ''}`, margin + 5, currentY + 15, 9);
+	currentY += rowHeight;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	drawText(`Objetivo da Viagem: ${request.objetivoViagem}`, margin + 5, currentY + 15, 10, true);
+	currentY += rowHeight;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	// --- EXPENSES TABLE ---
+	drawText('Despesas', margin + 70, currentY + 15, 9, true);
+	drawLine(margin + 160, currentY, margin + 160, currentY + 110);
+	drawText('Valor Solicitado', margin + 220, currentY + 15, 9, true);
+	drawLine(margin + 360, currentY, margin + 360, currentY + 110);
+	drawText('Valor Aprovado', margin + 400, currentY + 10, 9, true);
+	drawText('Aprovado', margin + 400, currentY + 20, 9, true);
+	currentY += rowHeight;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	drawText('2 Diárias', margin + 70, currentY + 15, 9);
+	drawText(`R$ ${request.valorDiariasSolicitado.toFixed(2)}`, margin + 220, currentY + 15, 10, true);
+	drawText(`R$ ${request.valorDiariasSolicitado.toFixed(2)}`, margin + 400, currentY + 15, 10, true);
+	currentY += rowHeight;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	drawText('Passagem', margin + 70, currentY + 15, 9);
+	currentY += 20;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	drawText('Indenização - transporte', margin + 40, currentY + 15, 9);
+	currentY += 20;
+	drawLine(margin, currentY, width - margin, currentY);
+
+	drawText('Total', margin + 70, currentY + 15, 10, true);
+	drawText(`R$ ${request.valorTotalSolicitado.toFixed(2)}`, margin + 220, currentY + 15, 10, true);
+	drawText(`R$ ${request.valorTotalSolicitado.toFixed(2)}`, margin + 400, currentY + 15, 10, true);
 	currentY += 25;
-	drawLine(iM, currentY, iR, currentY);
+	drawLine(margin, currentY, width - margin, currentY);
+
+	// Declaration and Signatures
+	drawText('Declaro que o valor recebido refere-se ao pagamento para custeio de despesas em', margin + 15, currentY + 15, 8);
+	drawText('decorrência de viagem a serviço da municipalidade, conforme demonstração supra,', margin + 15, currentY + 25, 8);
+	drawText('que deverei prestar contas nos termos da Lei Municipal no. 766, de 14.08.2017.', margin + 15, currentY + 35, 8);
+	currentY += 45;
 	
-	drawText('Viagem em transporte Intermunicipal:  Avião ( ) Ônibus ( ) Outro ( ) Van', 45, currentY + 17, 10);
-	currentY += 25; // 415
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 9
-	drawText('Cidade de destino/UF - ' + (request.destinoCidadeUf || '').toUpperCase(), 160, currentY + 17, 11, true);
-	currentY += 25; // 440
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 10
-	drawLine(350, currentY, 350, currentY + 25);
-	drawText('Veículo particular: ( ' + (request.veiculoParticular ? 'x' : ' ') + ' ) Sim, Just. ( ' + (!request.veiculoParticular ? 'x' : ' ') + ' ) Não', 45, currentY + 17, 10);
-	drawText('Justificativa: ' + (request.justificativaVeiculoParticular || ''), 360, currentY + 17, 10);
-	currentY += 25;
-	drawLine(iM, currentY, iR, currentY);
-
-	drawText('Distância entre a sede do município e local de destino de Ida e Volta:', 45, currentY + 17, 10);
-	drawText((request.distanciaIdaVolta || '') + ' KM', 420, currentY + 17, 10, true);
-	currentY += 25; // 495
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 11 & 12
-	drawLine(260, currentY, 260, currentY + 25);
-	drawText('Valor Indenização: R$ ' + Number(request.valorIndenizacaoKm || 0.8).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '/Km Rodado', 45, currentY + 17, 10);
-	drawText('Dados veículo Próprio: ' + (request.dadosVeiculoProprio || ''), 265, currentY + 17, 10);
-	currentY += 25; // 520
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 13 - Objetivo da Viagem (Quebra de Linha)
-	drawText('Objetivo da Viagem:', 45, currentY + 17, 10, true);
-	const labelWidth = fontBold.widthOfTextAtSize('Objetivo da Viagem: ', 10);
+	drawRect(margin + 5, currentY, boxWidth - 10, 100);
+	drawText(`Local/Data: Lagoa dos Patos, ${new Date(request.dataSolicitacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin + 10, currentY + 15, 10);
+	drawText(`Assinatura do Servidor/Assessor Jurídico – Procuradoria: ____________________________`, margin + 10, currentY + 35, 9);
 	
-	const maxWidthFirstLine = boxWidth - 20 - labelWidth;
-	const maxWidthOtherLines = boxWidth - 20;
-
-	const rawLines = (request.objetivoViagem || '-').split('\n');
-	const linesObj: string[] = [];
-	let isFirstLine = true;
+	drawText(`(  ) Solicitação Deferida     (  ) Solicitação Indeferida`, margin + 10, currentY + 55, 10);
 	
-	rawLines.forEach(rawLine => {
-		const words = rawLine.split(' ');
-		let currentLine = words[0] || '';
-		for (let i = 1; i < words.length; i++) {
-			const word = words[i];
-			const width = font.widthOfTextAtSize(currentLine + ' ' + word, 10);
-			const max = isFirstLine ? maxWidthFirstLine : maxWidthOtherLines;
-			if (width < max) {
-				currentLine += ' ' + word;
-			} else {
-				linesObj.push(currentLine);
-				currentLine = word;
-				isFirstLine = false;
-			}
-		}
-		if (currentLine || words.length === 1) { 
-			linesObj.push(currentLine);
-			isFirstLine = false;
-		}
-	});
-
-	let objY = currentY + 17;
-	drawText(linesObj[0] || '', 45 + labelWidth, objY, 10);
+	drawLine(margin + 15, currentY + 80, margin + 130, currentY + 80);
+	drawText('Secretário', margin + 45, currentY + 90, 9);
 	
-	for (let i = 1; i < linesObj.length; i++) {
-		objY += 15;
-		drawText(linesObj[i], 45, objY, 10);
+	drawLine(width - margin - 130, currentY + 80, width - margin - 15, currentY + 80);
+	if (settings.prefeitoNome) {
+		drawText(settings.prefeitoNome.toUpperCase(), width - margin - 130, currentY + 90, 8, true);
+		drawText('Prefeito Municipal', width - margin - 110, currentY + 100, 8);
+	} else {
+		drawText('Prefeito Municipal', width - margin - 110, currentY + 90, 9);
 	}
-	
-	currentY = Math.max(currentY + 25, objY + 10);
-	drawLine(iM, currentY, iR, currentY);
 
-	// Row 14 - Despesas Header
-	drawLine(230, currentY, 230, currentY + 105);
-	drawLine(410, currentY, 410, currentY + 105);
-	drawText('Despesas', 110, currentY + 17, 10);
-	drawText('Valor Solicitado', 280, currentY + 17, 10);
-	drawText('Valor', 465, currentY + 12, 10);
-	drawText('Aprovado', 455, currentY + 22, 10);
-	currentY += 25; // 595
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 15
-	drawText(request.quantidadeDiarias + ' Diárias', 110, currentY + 15, 10);
-	drawText('R$ ' + request.valorDiariasSolicitado.toFixed(2).replace('.', ','), 290, currentY + 15, 10, true);
-	drawText('R$ ' + request.valorDiariasSolicitado.toFixed(2).replace('.', ','), 445, currentY + 15, 10, true);
-	currentY += 20; // 615
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 16
-	drawText('Passagem', 110, currentY + 15, 10);
-	currentY += 20; // 635
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 17
-	drawText('Indenização - transporte', 70, currentY + 15, 10);
-	currentY += 20; // 655
-	drawLine(iM, currentY, iR, currentY);
-
-	// Row 18
-	drawText('Total', 120, currentY + 15, 10);
-	drawText('R$ ' + request.valorTotalSolicitado.toFixed(2).replace('.', ','), 290, currentY + 15, 10, true);
-	drawText('R$ ' + request.valorTotalSolicitado.toFixed(2).replace('.', ','), 445, currentY + 15, 10, true);
-	currentY += 20; // 675
-	
-	// End of table outer box, draw the dynamic outer border now
-	const tableHeight = currentY - boxStart;
-	drawRect(margin, boxStart, boxWidth, tableHeight);
-	drawRect(margin + 3, boxStart + 3, boxWidth - 6, tableHeight - 6);
-
-	// Below Table Text
-	currentY += 15; // 690
-	drawText('Declaro que o valor recebido refere-se ao pagamento para custeio de despesas em decorrência de viagem a serviço ', 40, currentY, 10);
-	drawText('da municipalidade, conforme demonstração supra, que deverei prestar contas nos termos da Lei Municipal.', 40, currentY + 15, 10);
-	drawText(settings.prefeituraLei || '', 40, currentY + 30, 10);
-
-	// Signatures Box
-	currentY += 45; // 735
-	drawRect(margin, currentY - 5, boxWidth, 125);
-	drawText('Local/Data: Lagoa dos Patos, ' + new Date(request.dataSolicitacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) + ',', 45, currentY + 10, 10);
-	drawText('Assinatura do Servidor/Assessor Jurídico – Procuradoria: _________________________________________', 45, currentY + 35, 10);
-	drawText('(  ) Solicitação Deferida     (  ) Solicitação Indeferida', 45, currentY + 60, 10);
-
-	drawText(user.name?.toUpperCase() || '', 300, currentY + 50, 8);
-
-	drawLine(50, currentY + 95, 200, currentY + 95);
-	drawText('Secretário(a) Municipal', 75, currentY + 105, 10);
-	drawText(' ', 100, currentY + 105, 10);
-
-	drawLine(350, currentY + 95, 530, currentY + 95);
-	drawText(settings.prefeitoNome?.toUpperCase() || '', 365, currentY + 105, 8);
-	drawText('Prefeito Municipal', 410, currentY + 115, 8);
-
-	// Footer
-	// drawText('LEI NO. 766/2017 (Decreto no.32/2019)', 180, 835, 11, true);
+	// Footer Data de Impressão
+	drawText(`Impresso em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`, margin, 810, 7);
 
 	return Buffer.from(await pdfDoc.save());
+	// const blob = new Blob([await pdfDoc.save()], { type: 'application/pdf' });
+	// const blobUrl = URL.createObjectURL(blob);
+	// window.open(blobUrl, '_blank');
+
+
+
 }
 
 export async function generateAnexoIII(request: Request, user: User, settings: Settings, report: Report) {

@@ -18,7 +18,9 @@ export const actions: Actions = {
 		if (!locals.user) return fail(401);
 
 		const formData = await request.formData();
+		const name = formData.get('name') as string;
 		const matricula = formData.get('matricula') as string;
+		const secretariaOrgao = formData.get('secretariaOrgao') as string;
 		const unidadeAdministrativa = formData.get('unidadeAdministrativa') as string;
 		const cpf = formData.get('cpf') as string;
 		const cargo = formData.get('cargo') as string;
@@ -32,7 +34,9 @@ export const actions: Actions = {
 		try {
 			await db.update(user)
 				.set({
+					name,
 					matricula,
+					secretariaOrgao,
 					unidadeAdministrativa,
 					cpf,
 					cargo,

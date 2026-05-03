@@ -3,6 +3,7 @@
 	import { cn } from '$lib/utils';
 
 	let { data } = $props();
+	// console.log(data);
 	let copiedId = $state<number | null>(null);
 	let searchQuery = $state('');
 	let statusFilter = $state('');
@@ -92,7 +93,8 @@
 	<div class="grid grid-cols-1 gap-4">
 		{#each filteredRequests as { request, report }}
 			{@const statusConfig = getStatusConfig(request.status)}
-			<div class="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col md:flex-row gap-6 items-center">
+			{@const corFundo = request.status === 'aprovada' ? 'bg-emerald-50' : request.status === 'rejeitada' ? 'bg-red-50' : 'bg-amber-50'}
+			<div class="{corFundo} rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col md:flex-row gap-6 items-center">
 				<div class="flex-1 min-w-0 space-y-4">
 					<div class="flex items-center gap-3">
 						<span class={cn("px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5", statusConfig.color)}>
@@ -166,7 +168,7 @@
 					<a 
 						href="/api/diarias/{request.id}/pdf" 
 						target="_blank"
-						class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-slate-50 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-colors border border-slate-100"
+						class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-yellow-100 text-yellow-700 rounded-xl font-bold hover:bg-slate-100 transition-colors border border-slate-100"
 					>
 						<FileDown size={18} />
 						PDF (Solicitação)

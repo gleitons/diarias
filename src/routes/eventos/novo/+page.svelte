@@ -115,6 +115,8 @@
 						<textarea 
 							id="description" name="description" 
 							rows="4"
+							required
+							maxlength={280}
 							placeholder="O que será discutido neste evento?"
 							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
 						></textarea>

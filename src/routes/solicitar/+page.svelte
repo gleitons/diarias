@@ -89,35 +89,7 @@
 		</div>
 		
 		<!-- Carregar Evento Quick Form -->
-		<div class="bg-white border border-slate-100 p-4 rounded-2xl shadow-sm flex items-center gap-3">
-			<div class="space-y-1">
-				<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tem um código de evento?</p>
-				<div class="flex gap-2">
-					<input 
-						type="text" 
-						bind:value={eventCode}
-						placeholder="Ex: 215444"
-						maxlength="6"
-						class="w-24 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-					/>
-					<button 
-						type="button"
-						onclick={loadEvent}
-						disabled={isLoadingEvent || eventCode.length !== 6}
-						class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors disabled:opacity-50"
-					>
-						{#if isLoadingEvent}
-							<Loader2 size={14} class="animate-spin" />
-						{:else}
-							Carregar
-						{/if}
-					</button>
-				</div>
-				{#if eventError}
-					<p class="text-[10px] text-red-500 font-bold">{eventError}</p>
-				{/if}
-			</div>
-		</div>
+		
 	</header>
 
 	{#if form?.success}
@@ -151,16 +123,47 @@
 					<MapPin class="text-blue-600" size={20} />
 					<h3 class="font-bold text-slate-800">Destino e Objetivo</h3>
 				</div>
+				<div class="bg-white border border-slate-100 p-4 rounded-2xl shadow-sm flex items-center gap-3">
+			<div class="space-y-1">
+				<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tem um código de evento?</p>
+				<div class="flex gap-2">
+					<input 
+						type="text" 
+						bind:value={eventCode}
+						placeholder="Ex: 215444"
+						maxlength="6"
+						class="w-36 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+					/>
+					<button 
+						type="button"
+						onclick={loadEvent}
+						disabled={isLoadingEvent || eventCode.length !== 6}
+						class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors disabled:opacity-50"
+					>
+						{#if isLoadingEvent}
+							<Loader2 size={14} class="animate-spin" />
+						{:else}
+							Carregar
+						{/if}
+					</button>
+					<a href="/eventos" target="_blank" class="px-3 py-1.5 bg-green-900 text-white rounded-lg text-xs font-bold hover:bg-green-800 transition-colors disabled:opacity-50">Listar Eventos</a>
+				</div>
+				{#if eventError}
+					<p class="text-[10px] text-red-500 font-bold">{eventError}</p>
+				{/if}
+			</div>
+		</div>
 				<div class="p-6 space-y-6">
 					<div class="space-y-2">
 						<label for="destinoCidadeUf" class="text-sm font-semibold text-slate-700">Cidade de Destino / UF</label>
+						<!-- disabled={true} -->
 						<input 
 							type="text" id="destinoCidadeUf" name="destinoCidadeUf" 
 							bind:value={destinoCidadeUf}
 							list="destinations-list"
 							onblur={lookupDistance}
 							required
-							placeholder="Ex: Belo Horizonte - MG"
+							placeholder="Insirao codigo do evento acima"
 							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
 						/>
 						<datalist id="destinations-list">
@@ -176,7 +179,7 @@
 							bind:value={objetivoViagem}
 							required
 							rows="3"
-							placeholder="Descreva detalhadamente o motivo da viagem..."
+							placeholder="Por favor Insira o codigo do evento..."
 							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
 						></textarea>
 					</div>

@@ -20,6 +20,7 @@
 	import { cn } from '$lib/utils';
 
 	let { data, form } = $props();
+	console.log(data);
 	let isProcessing = $state(false);
 
 	let request = $derived(data.item.request);
@@ -78,7 +79,7 @@
 							<FileText size={24} />
 						</div>
 						<div>
-							<h3 class="text-xl font-black text-slate-800">Solicitação #{request.id}</h3>
+							<h3 class="text-xl font-black text-slate-800">Solicitação #{request.code}</h3>
 							<p class="text-xs font-bold tracking-widest text-slate-500 uppercase">
 								{request.exercicio} • Diárias {request.tipoDiaria}
 							</p>

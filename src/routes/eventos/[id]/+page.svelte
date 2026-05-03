@@ -40,6 +40,9 @@
 		{ id: 'GO', name: 'Goiás' },
 		{ id: 'BA', name: 'Bahia' }
 	];
+
+	let remainingChars = $derived(280 - description.length);
+	// let remainingCharsClass = $derived(remainingChars < 0 ? 'text-red-500' : 'text-slate-500');
 </script>
 
 <div class="max-w-4xl mx-auto space-y-8 pb-12">
@@ -145,9 +148,12 @@
 							id="description" name="description" 
 							bind:value={description}
 							rows="3"
+							required
+							maxlength={280}
 							placeholder="Detalhes adicionais sobre o objetivo comum deste evento..."
 							class="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-slate-600 resize-none"
 						></textarea>
+							<p class="text-xs text-slate-500" class:text-red-500={280 - description.length < 0}>{280 - description.length} caracteres restantes</p>
 					</div>
 
 					<div class="pt-6 flex gap-4">

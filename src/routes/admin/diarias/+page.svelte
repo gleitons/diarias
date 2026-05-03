@@ -136,7 +136,7 @@
 							<td class="px-6 py-4 text-right">
 								<div class="flex justify-end gap-2">
 									<a 
-										href="/admin/diarias/{request.id}" 
+										href="/admin/diarias/{request.code}" 
 										class="p-2 bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
 										title="Visualizar Detalhes"
 									>

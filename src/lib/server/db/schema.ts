@@ -12,9 +12,10 @@ export const user = sqliteTable('user', {
 	// App specific fields
 	role: text('role').$default(() => 'solicitante').notNull(), // solicitante | adm_diarias | adm_geral
 	matricula: text('matricula'),
-	unidadeAdministrativa: text('unidade_administrativa'),
+	secretariaOrgao: text('secretaria_orgao'),
+	unidadeAdministrativa: text('unidade_administrativa').notNull().default(''),
 	cpf: text('cpf'),
-	cargo: text('cargo'),
+	cargo: text('cargo').notNull().default(''),
 	bancoNome: text('banco_nome'),
 	bancoAgenciaCod: text('banco_agencia_cod'),
 	bancoAgenciaNum: text('banco_agencia_num'),
