@@ -1,15 +1,19 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema';
+import { user, secretarias } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
 		throw redirect(303, '/login');
 	}
+
+	const listSecretarias = await db.select().from(secretarias).all();
+
 	return {
-		user: locals.user
+		user: locals.user,
+		secretarias: listSecretarias
 	};
 };
 
@@ -30,6 +34,7 @@ export const actions: Actions = {
 		const bancoContaNum = formData.get('bancoContaNum') as string;
 		const bancoTipoConta = formData.get('bancoTipoConta') as string;
 		const phone = formData.get('phone') as string;
+		// const tipoConta = bancoTipoConta;
 
 		try {
 			await db.update(user)
@@ -46,6 +51,7 @@ export const actions: Actions = {
 					bancoContaNum,
 					bancoTipoConta,
 					phone,
+					// tipoConta: bancoTipoConta,
 				})
 				.where(eq(user.id, locals.user.id));
 

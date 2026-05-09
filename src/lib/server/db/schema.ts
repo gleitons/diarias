@@ -20,7 +20,7 @@ export const user = sqliteTable('user', {
 	bancoAgenciaCod: text('banco_agencia_cod'),
 	bancoAgenciaNum: text('banco_agencia_num'),
 	bancoContaNum: text('banco_conta_num'),
-	bancoTipoConta: text('banco_tipo_conta'), // Corrente | Poupança
+	bancoTipoConta: text('banco_tipo_conta'), // CC | PP
 	phone: text('phone'),
 	banned: integer('banned', { mode: 'boolean' }).$default(() => false),
 	banReason: text('ban_reason'),
@@ -179,5 +179,17 @@ export const events = sqliteTable('events', {
 	userId: text('user_id')
 		.references(() => user.id)
 		.notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const secretarias = sqliteTable('secretarias', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	nome: text('nome').notNull(),
+	responsavel: text('responsavel').notNull(),
+	matricula: text('matricula').notNull(),
+	endereco: text('endereco').notNull(),
+	cpf: text('cpf').notNull(),
+	telefone: text('telefone').notNull(),
+	competencia: text('competencia').notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });

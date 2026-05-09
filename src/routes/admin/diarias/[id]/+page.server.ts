@@ -33,7 +33,7 @@ export const actions: Actions = {
 		if (!locals.user) return fail(401);
 		const id = parseInt(params.id);
 		
-		const request = await db.select().from(dailyRequests).where(eq(dailyRequests.id, id)).get();
+		const request = await db.select().from(dailyRequests).where(eq(dailyRequests.code, params.id)).get();
 		if (!request) return fail(404, { message: 'Solicitação não encontrada' });
 
 		await db.update(dailyRequests)
@@ -51,7 +51,6 @@ export const actions: Actions = {
 		const id = parseInt(params.id);
 		const formData = await request.formData();
 		const justificativaRejeicao = formData.get('justificativaRejeicao') as string;
-
 		await db.update(dailyRequests)
 			.set({ 
 				status: 'rejeitada',
@@ -66,6 +65,9 @@ export const actions: Actions = {
 		const id = parseInt(params.id);
 		const formData = await request.formData();
 		
+		const contabilidadeDataStr = formData.get('contabilidadeData') as string;
+		const homologacaoDataStr = formData.get('homologacaoData') as string;
+		
 		const contabilidadeParecer = formData.get('contabilidadeParecer') as string;
 		const homologacaoStatus = formData.get('homologacaoStatus') as string;
 		
@@ -76,9 +78,9 @@ export const actions: Actions = {
 		await db.update(accountabilityReports)
 			.set({
 				contabilidadeParecer,
-				contabilidadeData: new Date(),
+				contabilidadeData: contabilidadeDataStr ? new Date(contabilidadeDataStr + 'T12:00:00Z') : new Date(),
 				homologacaoStatus,
-				homologacaoData: new Date(),
+				homologacaoData: homologacaoDataStr ? new Date(homologacaoDataStr + 'T12:00:00Z') : new Date(),
 				anexoPassagens,
 				anexoCartoesEmbarque,
 				anexoAutorizacaoVeiculo,

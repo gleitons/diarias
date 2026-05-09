@@ -366,6 +366,40 @@
 						}}
 						class="space-y-6"
 					>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<label
+									for="contabilidadeData"
+									class="text-xs font-bold tracking-wider text-slate-400 uppercase"
+									>Data do Parecer</label
+								>
+								<input
+									type="date"
+									id="contabilidadeData"
+									name="contabilidadeData"
+									value={report.contabilidadeData ? new Date(report.contabilidadeData).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+									class="w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-bold transition-all outline-none focus:ring-2 focus:ring-blue-500 text-white"
+									style="color-scheme: dark;"
+								/>
+							</div>
+
+							<div class="space-y-2">
+								<label
+									for="homologacaoData"
+									class="text-xs font-bold tracking-wider text-slate-400 uppercase"
+									>Data da Homologação</label
+								>
+								<input
+									type="date"
+									id="homologacaoData"
+									name="homologacaoData"
+									value={report.homologacaoData ? new Date(report.homologacaoData).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+									class="w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-bold transition-all outline-none focus:ring-2 focus:ring-blue-500 text-white"
+									style="color-scheme: dark;"
+								/>
+							</div>
+						</div>
+
 						<div class="space-y-2">
 							<label
 								for="contabilidadeParecer"

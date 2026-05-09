@@ -112,6 +112,7 @@
 			return async ({ update }) => {
 				isSaving = false;
 				await update();
+				window.location.reload();
 			};
 		}}
 		class="grid grid-cols-1 lg:grid-cols-3 gap-8"
@@ -316,7 +317,7 @@
 								<input 
 									type="number" id="distanciaIdaVolta" name="distanciaIdaVolta" 
 									bind:value={distancia}
-									required min="0" step="0.1"
+									required min="0" step="any"
 									class={cn(
 										"w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-lg",
 										isSearchingDistance && "animate-pulse bg-blue-50 border-blue-200"
@@ -368,21 +369,19 @@
 					
 					<input type="hidden" name="valorTotalSolicitado" value={valorTotal} />
 					
-					<a href="#topo">
-						<button
-							type="submit"
-							disabled={isSaving}
-							class="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 mt-4"
-						>
-							{#if isSaving}
-								<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-								Processando...
-							{:else}
-								<Send size={20} />
-								Enviar Solicitação
-							{/if}
-						</button>
-					</a>
+					<button
+						type="submit"
+						disabled={isSaving}
+						class="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 mt-4"
+					>
+						{#if isSaving}
+							<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+							Processando...
+						{:else}
+							<Send size={20} />
+							Enviar Solicitação
+						{/if}
+					</button>
 				</div>
 			</section>
 

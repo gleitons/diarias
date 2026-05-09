@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { settings } from '$lib/server/db/schema';
+import { settings, secretarias } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -10,9 +10,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	const config = await db.select().from(settings).get();
+	const listSecretarias = await db.select().from(secretarias).all();
 	
 	return {
-		config
+		config,
+		secretarias: listSecretarias
 	};
 };
 
@@ -54,5 +56,37 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+	createSecretaria: async ({ request, locals }) => {
+		if (!locals.user) return fail(401);
+		const formData = await request.formData();
+		
+		const nome = formData.get('nome') as string;
+		const responsavel = formData.get('responsavel') as string;
+		const matricula = formData.get('matricula') as string;
+		const endereco = formData.get('endereco') as string;
+		const cpf = formData.get('cpf') as string;
+		const telefone = formData.get('telefone') as string;
+		const competencia = formData.get('competencia') as string;
+
+		await db.insert(secretarias).values({
+			nome,
+			responsavel,
+			matricula,
+			endereco,
+			cpf,
+			telefone,
+			competencia
+		});
+
+		return { successSecretaria: true };
+	},
+	deleteSecretaria: async ({ request, locals }) => {
+		if (!locals.user) return fail(401);
+		const formData = await request.formData();
+		const id = parseInt(formData.get('id') as string);
+		
+		await db.delete(secretarias).where(eq(secretarias.id, id));
+		return { successDeleteSecretaria: true };
 	}
 };

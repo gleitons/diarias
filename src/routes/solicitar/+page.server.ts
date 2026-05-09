@@ -35,6 +35,7 @@ export const actions: Actions = {
 		if (!locals.user) return fail(401);
 
 		const formData = await request.formData();
+		console.log(formData);
 		const destinoCidadeUf = formData.get('destinoCidadeUf') as string;
 		const objetivoViagem = formData.get('objetivoViagem') as string;
 		const dataSaida = new Date(formData.get('dataSaida') as string);
@@ -117,7 +118,7 @@ export const actions: Actions = {
 				valorTotalSolicitado,
 				status: 'pendente'
 			});
-
+			
 			return { success: true };
 		} catch (e) {
 			console.error(e);

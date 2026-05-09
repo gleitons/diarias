@@ -5,7 +5,7 @@
 
 	let { data, form } = $props();
 	let isSaving = $state(false);
-
+	console.log(data.user);
 	let unidadeLength = $state(data.user?.unidadeAdministrativa?.length || 0);
 
 	function handleCpfInput(e: Event) {
@@ -149,21 +149,11 @@
 						class="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 					>
 						<option value="">Selecione</option>
-						<option value="ADMINISTRAÇÃO">ADMINISTRAÇÃO</option>
-						<option value="CONTABILIDADE">CONTABILIDADE</option>
-						<option value="DEPARTAMENTO PESSOAL">DEPARTAMENTO PESSOAL</option>
-						<option value="PROCURADORIA">PROCURADORIA</option>
-						<option value="ASSISTÊNCIA SOCIAL">ASSISTÊNCIA SOCIAL</option>
-						<option value="EDUCAÇÃO">EDUCAÇÃO</option>
-						<option value="FINANÇAS">FINANÇAS</option>
-						<option value="AGRICULTURA">AGRICULTURA</option>
-						<option value="GABINETE">GABINETE</option>
-						<option value="MEIO AMBIENTE">MEIO AMBIENTE</option>
-						<option value="SAÚDE">SAÚDE</option>
-						<option value="SEGURANÇA PÚBLICA">SEGURANÇA PÚBLICA</option>
-						<option value="TURISMO">TURISMO</option>
-						<option value="OBRAS E TRANSPORTES">OBRAS E TRANSPORTES</option>
-						<option value="CULTURA E ESPORTE">CULTURA E ESPORTE</option>
+						{#if data.secretarias}
+							{#each data.secretarias as sec}
+								<option value={sec.nome} selected={data.user?.secretariaOrgao === sec.nome}>{sec.nome}</option>
+							{/each}
+						{/if}
 					</select>
 				</div>
 
@@ -270,14 +260,12 @@
 						<select
 							id="bancoTipoConta"
 							name="bancoTipoConta"
+							value={data.user?.bancoTipoConta || ""}
 							class="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 						>
-							<option value="Corrente" selected={data.user?.bancoTipoConta === 'Corrente'}
-								>Conta Corrente</option
-							>
-							<option value="Poupança" selected={data.user?.bancoTipoConta === 'Poupança'}
-								>Conta Poupança</option
-							>
+							<option value="">Selecione</option>
+							<option value="Conta Corrente">Conta Corrente</option>
+							<option value="Conta Poupança">Conta Poupança</option>
 						</select>
 					</div>
 				</div>

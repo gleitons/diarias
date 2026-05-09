@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Building2, MapPin, Scale, Image, Calculator, Save, CheckCircle2, User } from 'lucide-svelte';
+	import { Building2, MapPin, Scale, Image, Calculator, Save, CheckCircle2, User, Plus, Trash2 } from 'lucide-svelte';
 
 	let { data, form } = $props();
 	let isSaving = $state(false);
+	let isSavingSecretaria = $state(false);
+	let showNovaSecretaria = $state(false);
+	let isDeletingSecretaria = $state<number | null>(null);
 </script>
 
 <div class="space-y-8 pb-12">
@@ -177,4 +180,150 @@
 			</section>
 		</div>
 	</form>
+
+	<!-- Secretarias e Órgãos -->
+	<section class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mt-8">
+		<div class="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+			<div class="flex items-center gap-3">
+				<Building2 class="text-blue-600" size={24} />
+				<div>
+					<h3 class="text-xl font-black text-slate-800">Secretarias e Órgãos</h3>
+					<p class="text-sm text-slate-500 mt-1">Gerencie as secretarias disponíveis para cadastro dos servidores.</p>
+				</div>
+			</div>
+			<button 
+				type="button"
+				onclick={() => showNovaSecretaria = !showNovaSecretaria}
+				class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+			>
+				<Plus size={18} /> Nova Secretaria
+			</button>
+		</div>
+
+		{#if showNovaSecretaria}
+			<div class="p-8 border-b border-slate-100 bg-slate-50">
+				<form 
+					method="POST" 
+					action="?/createSecretaria"
+					use:enhance={() => {
+						isSavingSecretaria = true;
+						return async ({ update }) => {
+							isSavingSecretaria = false;
+							showNovaSecretaria = false;
+							await update();
+						};
+					}}
+					class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6"
+				>
+					<h4 class="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4">
+						<Plus size={18} class="text-blue-600" /> Cadastrar Nova Secretaria
+					</h4>
+					
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						<div class="space-y-2">
+							<label for="nomeSec" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Nome da Secretaria</label>
+							<input type="text" id="nomeSec" name="nome" required placeholder="Ex: Secretaria de Saúde" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+						</div>
+						<div class="space-y-2">
+							<label for="respSec" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Responsável (Secretário)</label>
+							<input type="text" id="respSec" name="responsavel" required placeholder="Nome do responsável" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+						</div>
+						<div class="space-y-2">
+							<label for="matSec" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Matrícula</label>
+							<input type="text" id="matSec" name="matricula" required placeholder="12345" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+						</div>
+						<div class="space-y-2">
+							<label for="endSec" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Endereço do Prédio</label>
+							<input type="text" id="endSec" name="endereco" required placeholder="Rua..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+						</div>
+						<div class="space-y-2">
+							<label for="cpfSec" class="text-xs font-bold text-slate-400 uppercase tracking-wider">CPF do Responsável</label>
+							<input type="text" id="cpfSec" name="cpf" required placeholder="000.000.000-00" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+						</div>
+						<div class="space-y-2">
+							<label for="telSec" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Telefone do Responsável</label>
+							<input type="text" id="telSec" name="telefone" required placeholder="(00) 00000-0000" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+						</div>
+						<div class="space-y-2 lg:col-span-3">
+							<label for="compSec" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Competência</label>
+							<textarea id="compSec" name="competencia" required placeholder="Descreva as competências desta secretaria..." rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none"></textarea>
+						</div>
+					</div>
+
+					<div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+						<button type="button" onclick={() => showNovaSecretaria = false} class="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all">Cancelar</button>
+						<button type="submit" disabled={isSavingSecretaria} class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center gap-2">
+							{#if isSavingSecretaria}
+								<div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+							{/if}
+							Salvar Secretaria
+						</button>
+					</div>
+				</form>
+			</div>
+		{/if}
+
+		<div class="p-8">
+			{#if !data.secretarias || data.secretarias.length === 0}
+				<div class="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
+					<Building2 class="mx-auto h-12 w-12 text-slate-300 mb-4" />
+					<h3 class="text-sm font-medium text-slate-900">Nenhuma secretaria cadastrada</h3>
+					<p class="mt-1 text-sm text-slate-500">Comece cadastrando as secretarias do município para que os servidores possam selecioná-las.</p>
+				</div>
+			{:else}
+				<div class="overflow-x-auto">
+					<table class="w-full text-left text-sm whitespace-nowrap">
+						<thead>
+							<tr class="border-b border-slate-100 text-slate-400 uppercase tracking-wider text-[10px] font-bold">
+								<th class="pb-3 font-medium">Nome</th>
+								<th class="pb-3 font-medium">Responsável</th>
+								<th class="pb-3 font-medium">Telefone</th>
+								<th class="pb-3 font-medium text-right">Ações</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-100">
+							{#each data.secretarias as sec}
+								<tr class="group hover:bg-slate-50/50 transition-colors">
+									<td class="py-4 font-medium text-slate-800">{sec.nome}</td>
+									<td class="py-4 text-slate-600">{sec.responsavel}</td>
+									<td class="py-4 text-slate-600">{sec.telefone}</td>
+									<td class="py-4 text-right">
+										<form 
+											method="POST" 
+											action="?/deleteSecretaria"
+											use:enhance={() => {
+												isDeletingSecretaria = sec.id;
+												return async ({ update }) => {
+													isDeletingSecretaria = null;
+													await update();
+												};
+											}}
+											class="inline-block"
+										>
+											<input type="hidden" name="id" value={sec.id} />
+											<button 
+												type="submit" 
+												disabled={isDeletingSecretaria === sec.id}
+												class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
+												title="Remover secretaria"
+												onclick={(e) => {
+													if(!confirm('Tem certeza que deseja remover esta secretaria?')) e.preventDefault();
+												}}
+											>
+												{#if isDeletingSecretaria === sec.id}
+													<div class="w-4 h-4 border-2 border-rose-500/30 border-t-rose-500 rounded-full animate-spin"></div>
+												{:else}
+													<Trash2 size={16} />
+												{/if}
+											</button>
+										</form>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
+		</div>
+	</section>
 </div>

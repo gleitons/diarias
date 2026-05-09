@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, Search, MapPin, Calendar, ArrowRight, Edit, Hash } from 'lucide-svelte';
+	import { Plus, Search, MapPin, Calendar, ArrowRight, Edit, Hash, Copy, Check } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 
 	let { data } = $props();
@@ -17,6 +17,18 @@
 			);
 		})
 	);
+
+	let copiedCode = $state<string | null>(null);
+
+	function copyCode(code: string) {
+		if (typeof navigator !== 'undefined' && navigator.clipboard) {
+			navigator.clipboard.writeText(code);
+			copiedCode = code;
+			setTimeout(() => {
+				if (copiedCode === code) copiedCode = null;
+			}, 2000);
+		}
+	}
 </script>
 
 <div class="space-y-8 pb-12">
@@ -86,9 +98,18 @@
 						<Edit size={16} />
 						Editar
 					</a>
-					<div class="px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-mono font-bold">
+					<button 
+						onclick={() => copyCode(event.code)}
+						class="flex items-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-mono font-bold hover:bg-slate-800 transition-colors"
+						title="Copiar código"
+					>
 						{event.code}
-					</div>
+						{#if copiedCode === event.code}
+							<Check size={16} class="text-emerald-400" />
+						{:else}
+							<Copy size={16} class="opacity-50" />
+						{/if}
+					</button>
 				</div>
 			</div>
 		{:else}
