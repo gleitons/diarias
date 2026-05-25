@@ -18,7 +18,7 @@
 				{/if}
 			{:else}
 				<h2 class="text-4xl md:text-5xl font-black leading-tight">Gestão de Diárias Municipal</h2>
-				<p class="text-blue-100 text-lg font-medium">Sistema oficial para solicitação e prestação de contas de viagens da Prefeitura de Lagoa dos Patos.</p>
+				<p class="text-black text-lg font-medium">Sistema para solicitação e prestação de contas de viagens da Prefeitura de Lagoa dos Patos.</p>
 				<div class="flex gap-4 pt-4">
 					<a href="/login" class="px-8 py-4 bg-white text-blue-600 rounded-2xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-lg">
 						Entrar no Sistema

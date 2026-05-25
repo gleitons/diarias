@@ -62,9 +62,13 @@ export const actions: Actions = {
 	},
 	homologate: async ({ request, params, locals }) => {
 		if (!locals.user) return fail(401);
-		const id = parseInt(params.id);
+		
+		const dailyReq = await db.select().from(dailyRequests).where(eq(dailyRequests.code, params.id)).get();
+		if (!dailyReq) return fail(404, { message: 'Solicitação não encontrada' });
+		
 		const formData = await request.formData();
 		
+		const dataRelatorioStr = formData.get('dataRelatorio') as string;
 		const contabilidadeDataStr = formData.get('contabilidadeData') as string;
 		const homologacaoDataStr = formData.get('homologacaoData') as string;
 		
@@ -78,6 +82,7 @@ export const actions: Actions = {
 		await db.update(accountabilityReports)
 			.set({
 				contabilidadeParecer,
+				dataRelatorio: dataRelatorioStr ? new Date(dataRelatorioStr + 'T12:00:00Z') : new Date(),
 				contabilidadeData: contabilidadeDataStr ? new Date(contabilidadeDataStr + 'T12:00:00Z') : new Date(),
 				homologacaoStatus,
 				homologacaoData: homologacaoDataStr ? new Date(homologacaoDataStr + 'T12:00:00Z') : new Date(),
@@ -86,7 +91,7 @@ export const actions: Actions = {
 				anexoAutorizacaoVeiculo,
 				status: homologacaoStatus === 'REPROVADA' ? 'rejeitada' : 'aprovada'
 			})
-			.where(eq(accountabilityReports.dailyRequestId, id));
+			.where(eq(accountabilityReports.dailyRequestId, dailyReq.id));
 
 		return { success: true };
 	}

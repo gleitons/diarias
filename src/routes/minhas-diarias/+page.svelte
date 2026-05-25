@@ -13,8 +13,8 @@
 			const queryMatch = () => {
 				if (!searchQuery) return true;
 				const query = searchQuery.toLowerCase();
-				const dataSaida = new Date(request.dataSaida).toLocaleDateString('pt-BR');
-				const dataRetorno = new Date(request.dataRetorno).toLocaleDateString('pt-BR');
+				const dataSaida = new Date(request.dataSaida).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+				const dataRetorno = new Date(request.dataRetorno).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 				
 				return (
 					request.id.toString().includes(query) ||
@@ -137,7 +137,7 @@
 							<div>
 								<p class="text-xs text-slate-400 font-bold uppercase">Período</p>
 								<p class="font-bold text-slate-700">
-									{new Date(request.dataSaida).toLocaleDateString('pt-BR')} - {new Date(request.dataRetorno).toLocaleDateString('pt-BR')}
+									{new Date(request.dataSaida).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} - {new Date(request.dataRetorno).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
 								</p>
 							</div>
 						</div>

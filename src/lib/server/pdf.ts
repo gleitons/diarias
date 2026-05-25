@@ -128,9 +128,9 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
     vLine(iR - 130, currentY, currentY + r1H);
     vLine(iR, currentY, currentY + r1H);
     
-    drawText('Prefeitura', iM + 45, currentY + 12, 10, true, true);
-    drawText('Municipal de', iM + 45, currentY + 23, 10, true, true);
-    drawText('Lagoa dos Patos', iM + 45, currentY + 34, 10, true, true);
+    drawText('Prefeitura', iM + 45, currentY + 12, 8, true, true);
+    drawText('Municipal de', iM + 45, currentY + 23, 8, true, true);
+    drawText('Lagoa dos Patos', iM + 45, currentY + 34, 8, true, true);
 
     drawText('Solicitação de Diárias/Indenização/Passagem', (iM + 90 + iR - 130) / 2, currentY + 21, 11, true, true);
 
@@ -142,7 +142,7 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
     drawLine(iR - 130, currentY + 18, iR, currentY + 18);
 
     drawText('Data:', iR - 125, currentY + 30, 10);
-    const dataStr = new Date(request.dataSolicitacao).toLocaleDateString('pt-BR');
+    const dataStr = formatDate(request.dataSolicitacao);
     const dataWidth = fontBold.widthOfTextAtSize(dataStr, 10);
     drawText(dataStr, iR - 5 - dataWidth, currentY + 30, 10, true);
 
@@ -171,9 +171,9 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
     vLine(iM, currentY, currentY + r3H);
     vLine(iR - 130, currentY, currentY + r3H);
     vLine(iR, currentY, currentY + r3H);
-
-    drawText('Unidade / Secretaria: ', iM + 5, currentY + 12, 10);
-    drawText((user.unidadeAdministrativa || '') + ' / ' + (user.secretariaOrgao || ''), iM + 110, currentY + 12, 10, true);
+    const contadoCUnidade = user.unidadeAdministrativa.length
+    drawText('Unidade / Secretaria: ', iM + 5, currentY + 12, contadoCUnidade > 40 ? 8 : 10);
+    drawText((user.unidadeAdministrativa || '') + ' / ' + (user.secretariaOrgao || ''), iM + 110, currentY + 12,  contadoCUnidade > 20 ? 8 : 10, true);
     drawText('CPF:', iR - 125, currentY + 12, 10);
     const cpfStr = formatCpf(user.cpf || '');
     const cpfWidth = fontBold.widthOfTextAtSize(cpfStr, 10);
@@ -187,9 +187,9 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
     vLine(iM, currentY, currentY + r4H);
     vLine(iR - 130, currentY, currentY + r4H);
     vLine(iR, currentY, currentY + r4H);
-
-    drawText('Cargo Municipal: ', iM + 5, currentY + 12, 10);
-    drawText(user.cargo || '', iM + 90, currentY + 12, 10, true);
+    const contadoCCargo = user.cargo.length
+    drawText('Cargo Municipal: ', iM + 5, currentY + 12, contadoCCargo > 40 ? 8 : 10);
+    drawText(user.cargo || '', iM + 90, currentY + 12, contadoCCargo > 40 ? 8 : 10, true);
     drawText('Qtd de diárias: ', iR - 125, currentY + 12, 10);
     const qtdStr = `${request.quantidadeDiarias} (` + extenso(request.quantidadeDiarias.toString()) + `)`;
     const qtdWidth = fontBold.widthOfTextAtSize(qtdStr, 10);
@@ -243,15 +243,14 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
     vLine(iR, currentY, currentY + r7H);
 
     drawText('Viagens Previstas Período:', iM + 5, currentY + 12, 10);
-    drawText('Saída: ' + new Date(request.dataSaida).toLocaleDateString('pt-BR') + ' ' + (request.horaSaida || ''), iM + 140, currentY + 12, 10, true);
-    drawText('Retorno: ' + new Date(request.dataRetorno).toLocaleDateString('pt-BR') + ' ' + (request.horaRetorno || ''), iM + 330, currentY + 12, 10, true);
+    drawText('Saída: ' + formatDate(request.dataSaida) + ' ' + (request.horaSaida || ''), iM + 140, currentY + 12, 10, true);
+    drawText('Retorno: ' + formatDate(request.dataRetorno) + ' ' + (request.horaRetorno || ''), iM + 330, currentY + 12, 10, true);
 
     currentY += r7H;
     hLine(currentY);
 
     // Row 8 (Meio de Transporte)
     const r8H = 18;
-    fillRect(iM, currentY, boxWidth, r8H);
     vLine(iM, currentY, currentY + r8H);
     vLine(iR, currentY, currentY + r8H);
     
@@ -425,12 +424,12 @@ export async function generateAnexoII(request: Request, user: User, settings: Se
     
     // Outer border for signatures box
     const sigBoxHeight = 130;
-    drawRect(iM, currentY, boxWidth, sigBoxHeight);
+    drawRect(iM, currentY, boxWidth, sigBoxHeight + 20);
 
-    drawText(`Local/Data: Lagoa dos Patos, ${new Date(request.dataSolicitacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })},`, iM + 15, currentY + 20, 10);
+    drawText(`Local/Data: Lagoa dos Patos, ${new Date(request.dataSolicitacao).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric' })},`, iM + 15, currentY + 20, 10);
     
     drawText('Assinatura do Servidor/Assessor Jurídico – Procuradoria: _________________________________________', iM + 15, currentY + 50, 10);
-    drawText(user.name?.toUpperCase() || '', iM + 280, currentY + 55, 9);
+    drawText(user.name?.toUpperCase() || '', iM + 270, currentY + 65, 9);
 
     drawText('(  ) Solicitação Deferida          (  ) Solicitação Indeferida', iM + 15, currentY + 85, 10);
 
@@ -549,9 +548,9 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
     vLine(iR - 130, currentY, currentY + r1H);
     vLine(iR, currentY, currentY + r1H);
     
-    drawText('Prefeitura', iM + 45, currentY + 12, 10, true, true);
-    drawText('Municipal de Lagoa', iM + 45, currentY + 23, 10, true, true);
-    drawText('dos Patos', iM + 45, currentY + 34, 10, true, true);
+    drawText('Prefeitura', iM + 45, currentY + 12, 8, true, true);
+    drawText('Municipal de Lagoa', iM + 45, currentY + 23, 8, true, true);
+    drawText('dos Patos', iM + 45, currentY + 34, 8, true, true);
 
     drawText('Solicitação de', (iM + 90 + iR - 130) / 2, currentY + 15, 11, true, true);
     drawText('Diárias/Indenização/Passagem', (iM + 90 + iR - 130) / 2, currentY + 27, 11, true, true);
@@ -564,7 +563,7 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
     drawLine(iR - 130, currentY + 18, iR, currentY + 18);
 
     drawText('Data:', iR - 125, currentY + 30, 10);
-    const dataStr = new Date(request.dataSolicitacao).toLocaleDateString('pt-BR');
+    const dataStr = formatDate(request.dataSolicitacao);
     const dataWidth = fontBold.widthOfTextAtSize(dataStr, 10);
     drawText(dataStr, iR - 5 - dataWidth, currentY + 30, 10, true);
 
@@ -593,9 +592,9 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
     vLine(iM, currentY, currentY + r3H);
     vLine(iR - 130, currentY, currentY + r3H);
     vLine(iR, currentY, currentY + r3H);
-
-    drawText('Unidade / Secretaria: ', iM + 5, currentY + 12, 10);
-    drawText((user.unidadeAdministrativa || '') + ' / ' + (user.secretariaOrgao || ''), iM + 110, currentY + 12, 10, true);
+    const contadoCSecretaria = user.unidadeAdministrativa.length
+    drawText('Unidade / Secretaria: ', iM + 5, currentY + 12, contadoCSecretaria > 40 ? 8 : 10);
+    drawText((user.unidadeAdministrativa || '') + ' / ' + (user.secretariaOrgao || ''), iM + 110, currentY + 12, contadoCSecretaria > 40 ? 8 : 10, true);
     drawText('CPF:', iR - 125, currentY + 12, 10);
     const cpfStr = formatCpf(user.cpf || '');
     const cpfWidth = fontBold.widthOfTextAtSize(cpfStr, 10);
@@ -609,9 +608,9 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
     vLine(iM, currentY, currentY + r4H);
     vLine(iR - 130, currentY, currentY + r4H);
     vLine(iR, currentY, currentY + r4H);
-
-    drawText('Cargo Municipal: ', iM + 5, currentY + 12, 10);
-    drawText(user.cargo || '', iM + 90, currentY + 12, 10, true);
+    const contadoCCargo = user.cargo.length
+    drawText('Cargo Municipal: ', iM + 5, currentY + 12, contadoCCargo > 40 ? 8 : 10);
+    drawText(user.cargo || '', iM + 90, currentY + 12, contadoCCargo > 40 ? 8 : 10, true);
     drawText('Qtd de Pernoites: ', iR - 125, currentY + 12, 10);
     const pernoites = report.quantidadePernoites || 0;
     const qtdStr = `${pernoites} (` + extenso(pernoites.toString()) + `)`;
@@ -649,7 +648,9 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
     vLine(iM, currentY, currentY + r6H);
     vLine(iR, currentY, currentY + r6H);
 
-    drawText('Cidade de destino/UF – ' + (request.destinoCidadeUf || '').toUpperCase(), width/2, currentY + 13, 11, true, true);
+    drawText('Cidade de destino/UF:', iM + 5,  currentY + 13, 11, false,false );
+    drawText((request.destinoCidadeUf || '').toUpperCase(), width/2, currentY + 13, 11, true, true);
+
 
     currentY += r6H;
     hLine(currentY);
@@ -744,7 +745,7 @@ export async function generateAnexoIII(request: Request, user: User, settings: S
     drawText('Por ser esta expressão da verdade firmo a assinatura do servidor abaixo nesta presente', iM + 5, currentY + 20, 10);
     drawText('declaração:', iM + 5, currentY + 32, 10);
 
-    const dataFinalStr = new Date(report.dataRelatorio).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const dataFinalStr = new Date(report.dataRelatorio).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric' });
     drawText(`Lagoa dos Patos-MG, ${dataFinalStr}.`, iM + 5, currentY + 55, 10, true);
 
     drawLine(width/2 - 150, currentY + 115, width/2 + 150, currentY + 115);
@@ -891,9 +892,9 @@ export async function generateAnexoIV(request: Request, user: User, settings: Se
     vLine(iM, currentY, currentY + r3H);
     vLine(iR - 130, currentY, currentY + r3H);
     vLine(iR, currentY, currentY + r3H);
-
-    drawText('Unidade / Secretaria: ', iM + 5, currentY + 16, 10);
-    drawText((user.unidadeAdministrativa || '') + ' / ' + (user.secretariaOrgao || ''), iM + 110, currentY + 16, 10, true);
+    const contadoCUnidade = user.unidadeAdministrativa.length
+    drawText('Unidade / Secretaria: ', iM + 5, currentY + 16, contadoCUnidade > 40 ? 8 : 10);
+    drawText((user.unidadeAdministrativa || '') + ' / ' + (user.secretariaOrgao || ''), iM + 110, currentY + 16, contadoCUnidade > 40 ? 20 : 10, true);
     drawText('CPF:', iR - 125, currentY + 16, 10);
     const cpfStr = formatCpf(user.cpf || '');
     const cpfWidth = fontBold.widthOfTextAtSize(cpfStr, 10);
@@ -906,9 +907,9 @@ export async function generateAnexoIV(request: Request, user: User, settings: Se
     const r4H = 26;
     vLine(iM, currentY, currentY + r4H);
     vLine(iR, currentY, currentY + r4H);
-
-    drawText('Cargo Municipal: ', iM + 5, currentY + 16, 10);
-    drawText(user.cargo || '', iM + 90, currentY + 16, 10, true);
+    const contadoCCargo = user.cargo.length
+    drawText('Cargo Municipal: ', iM + 5, currentY + 16, contadoCCargo > 40 ? 8 : 10);
+    drawText(user.cargo || '', iM + 90, currentY + 16, contadoCCargo > 40 ? 8 : 10, true);
 
     currentY += r4H;
     hLine(currentY);

@@ -13,10 +13,22 @@
 	function formatDateTime(date: Date, time: string | null) {
 		if (!date) return '';
 		const d = new Date(date);
-		const year = d.getFullYear();
-		const month = String(d.getMonth() + 1).padStart(2, '0');
-		const day = String(d.getDate()).padStart(2, '0');
-		return `${year}-${month}-${day}T${time || '08:00'}`;
+		const isUtcMidnight = d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0 && d.getUTCMilliseconds() === 0;
+		const year = isUtcMidnight ? d.getUTCFullYear() : d.getFullYear();
+		const month = String((isUtcMidnight ? d.getUTCMonth() : d.getMonth()) + 1).padStart(2, '0');
+		const day = String(isUtcMidnight ? d.getUTCDate() : d.getDate()).padStart(2, '0');
+		
+		let timePart = time;
+		if (!timePart) {
+			if (isUtcMidnight) {
+				timePart = '08:00';
+			} else {
+				const hours = String(d.getHours()).padStart(2, '0');
+				const minutes = String(d.getMinutes()).padStart(2, '0');
+				timePart = `${hours}:${minutes}`;
+			}
+		}
+		return `${year}-${month}-${day}T${timePart}`;
 	}
 </script>
 
@@ -63,9 +75,9 @@
 		<div class="space-y-1">
 			<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Período Solicitado</p>
 			<p class="font-bold text-slate-700">
-				{new Date(trip.dataSaida).toLocaleDateString('pt-BR')} {trip.horaSaida || ''} 
+				{new Date(trip.dataSaida).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} {trip.horaSaida || ''} 
 				<span class="text-slate-300 mx-2">→</span> 
-				{new Date(trip.dataRetorno).toLocaleDateString('pt-BR')} {trip.horaRetorno || ''}
+				{new Date(trip.dataRetorno).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} {trip.horaRetorno || ''}
 			</p>
 		</div>
 		<div class="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-200">
@@ -95,7 +107,7 @@
 				<h3 class="font-bold text-slate-800">Datas e Horários Reais</h3>
 			</div>
 			<div class="p-6 space-y-6">
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 					<div class="space-y-2">
 						<label for="dataHoraPartida" class="text-sm font-semibold text-slate-700">Partida (Data e Hora)</label>
 						<input 
@@ -112,6 +124,15 @@
 							required
 							value={data.existingReport ? formatDateTime(data.existingReport.dataHoraChegada, '') : formatDateTime(trip.dataRetorno, trip.horaRetorno)}
 							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+						/>
+					</div>
+					<div class="space-y-2">
+						<label for="dataRelatorio" class="text-sm font-semibold text-slate-700">Data do Relatório</label>
+						<input 
+							type="date" id="dataRelatorio" name="dataRelatorio" 
+							required
+							value={data.existingReport ? new Date(data.existingReport.dataRelatorio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+							class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold"
 						/>
 					</div>
 					<div class="space-y-2">

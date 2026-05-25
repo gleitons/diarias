@@ -106,7 +106,7 @@
 							<td class="px-6 py-4">
 								<p class="text-sm font-bold text-slate-700">{request.destinoCidadeUf}</p>
 								<p class="text-[10px] text-slate-400 font-medium">
-									{new Date(request.dataSaida).toLocaleDateString('pt-BR')} - {new Date(request.dataRetorno).toLocaleDateString('pt-BR')}
+									{new Date(request.dataSaida).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} - {new Date(request.dataRetorno).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
 								</p>
 							</td>
 							<td class="px-6 py-4">

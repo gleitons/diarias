@@ -149,9 +149,9 @@
 									Período
 								</p>
 								<p class="font-bold text-slate-800">
-									{new Date(request.dataSaida).toLocaleDateString('pt-BR')} a {new Date(
+									{new Date(request.dataSaida).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} a {new Date(
 										request.dataRetorno
-									).toLocaleDateString('pt-BR')}
+									).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
 								</p>
 								<p class="text-sm text-slate-500">
 									{request.quantidadeDiarias} diária(s) solicitada(s)
@@ -330,10 +330,10 @@
 							</div>
 							<div class="text-right">
 								<p class="mb-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-									Data do Relatório
+									Data original do Relatório
 								</p>
 								<p class="font-bold text-slate-700">
-									{new Date(report.dataRelatorio).toLocaleDateString('pt-BR')}
+									{new Date(report.dataRelatorio).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
 								</p>
 							</div>
 						</div>
@@ -366,7 +366,23 @@
 						}}
 						class="space-y-6"
 					>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<div class="space-y-2">
+								<label
+									for="dataRelatorio"
+									class="text-xs font-bold tracking-wider text-slate-400 uppercase"
+									>Data do Relatório</label
+								>
+								<input
+									type="date"
+									id="dataRelatorio"
+									name="dataRelatorio"
+									value={report.dataRelatorio ? new Date(report.dataRelatorio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+									class="w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-bold transition-all outline-none focus:ring-2 focus:ring-blue-500 text-white"
+									style="color-scheme: dark;"
+								/>
+							</div>
+
 							<div class="space-y-2">
 								<label
 									for="contabilidadeData"

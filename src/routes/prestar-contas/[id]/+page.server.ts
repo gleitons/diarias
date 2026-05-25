@@ -46,6 +46,8 @@ export const actions: Actions = {
 		const dataHoraPartida = new Date(formData.get('dataHoraPartida') as string);
 		const dataHoraChegada = new Date(formData.get('dataHoraChegada') as string);
 		const relatorioDetalhado = formData.get('relatorioDetalhado') as string;
+		const dataRelatorioStr = formData.get('dataRelatorio') as string;
+		const dataRelatorio = dataRelatorioStr ? new Date(`${dataRelatorioStr}T12:00:00`) : new Date();
 		
 		const inexistenciaResidenciaPropria = formData.get('inexistenciaResidenciaPropria') === 'on';
 		const anexoPassagens = formData.get('anexoPassagens') === 'on';
@@ -66,7 +68,7 @@ export const actions: Actions = {
 				anexoCartoesEmbarque,
 				anexoAutorizacaoVeiculo,
 				anexoComprovanteParticipacao,
-				dataRelatorio: new Date(),
+				dataRelatorio,
 				status: 'pendente'
 			};
 
